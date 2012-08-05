@@ -1,0 +1,6 @@
+<?php /*
+
+[EditSettings]
+ExtensionDirectories[]=xrowworkflow
+
+*/ ?>
