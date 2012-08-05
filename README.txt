@@ -2,15 +2,14 @@ Installation
 
 * Activate
 * Execute SQL
-* Create State Group "workflow_date"
+* Create State Group "workflow_date" / Veröffentlichung
  * Create States
    online/Online
    offline/Offline
    queue/Online Queue
-   /* later
+* Create State Group "workflow_approval" / Freigabe
+   confirmed/Abgesegnet
    handling/Bearbeitung
    approval/Freigabe
-   confirmed/Abgesegnet
-   */
 * Configure cron
 * Clear cache
