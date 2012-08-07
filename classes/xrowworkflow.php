@@ -49,11 +49,11 @@ class xrowworkflow extends eZPersistentObject
 
     function check()
     {
-        if ( isset( $this->end ) and $this->end < time() )
+        if ( isset( $this->end ) and $this->end < time() and $this->end > 0 )
         {
             return $this->offline();
         }
-        if ( isset( $this->start ) and $this->start < time() )
+        if ( isset( $this->start ) and $this->start < time() and $this->start > 0 )
         {
             return $this->online();
         }
