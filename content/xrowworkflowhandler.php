@@ -51,11 +51,27 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
 
     function publish( $contentObjectID, $version )
     {
+    	$cov = eZContentObjectVersion::fetchVersion($version, $contentObjectID);
+        if ( $cov instanceof eZContentObjectVersion )
+        {
+        	$co = $cov->attribute( 'contentobject' );
+        	if( $co && $co->attribute( 'class_identifier' ) == 'event' )
+        	{
+        		$dm = $cov->dataMap();
+        		if ( isset( $dm['start'] ) && $dm['start']->hasContent() )
+        		{
+        		    $time = $dm['start']->content();
+        		    $co->setAttribute( 'published', $time );
+        		    $co->store();
+        		}
+        	}
+        }
         $workflow = xrowworkflow::fetchByContentObjectID( $contentObjectID );  
         if( $workflow instanceof xrowworkflow )
         {
         	$workflow->check();
         }
+
     }
     /*
      * @return Datetime
