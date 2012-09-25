@@ -60,7 +60,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         		$dm = $cov->dataMap();
         		if ( isset( $dm['start'] ) && $dm['start']->hasContent() )
         		{
-        		    $time = $dm['start']->content();
+        		    $time = $dm['start']->attribute( 'data_int' );
         		    $co->setAttribute( 'published', $time );
         		    $co->store();
         		}
