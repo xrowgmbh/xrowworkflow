@@ -29,10 +29,3 @@ class xrowworkflowFilter
         return $result;
     }
 }
-
-
-
-
-
-
-?>

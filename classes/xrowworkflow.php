@@ -123,11 +123,20 @@ class xrowworkflow extends eZPersistentObject
 
     function offline()
     {
+    	$db->begin();
+    	$db = eZDB::instance();
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         )
          );
         $this->remove();
+        
+        // Remove from the flow
+        if ( $this->contentobject_id > 0 )
+        {
+            $db->query( 'DELETE FROM ezm_pool WHERE object_id = ' . (int) $this->contentobject_id );
+        }
+        $db->commit();
         eZDebug::writeDebug( __METHOD__ );
     }
 }
