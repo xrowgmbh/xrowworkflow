@@ -47,9 +47,11 @@ if ( $nodeArrayCount > 0 )
         $nodeArray = $rootNode->subTree( $params );
         foreach ( $nodeArray as $node )
         {
-            xrowworkflow::fetchByContentObjectID( $node->ContentObjectID )->offline();
-            
-        
+            $worklfow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
+            if( $workflow instanceof xrowworkflow )
+            {
+                $workflow->offline();
+            }
             if ( ! $isQuiet )
             {
                 $cli->output( 'Hiding node: "' . $node->attribute( 'name' ) . '" (' . $node->attribute( 'node_id' ) . ')' );
@@ -88,8 +90,11 @@ if ( $nodeArrayCount > 0 )
         $nodeArray = $rootNode->subTree( $params );
         foreach ( $nodeArray as $node )
         {
-            xrowworkflow::fetchByContentObjectID( $node->ContentObjectID )->online();
-            
+            $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
+            if( $workflow instanceof xrowworkflow )
+            {
+                $workflow->online();
+            }
         
             if ( ! $isQuiet )
             {
