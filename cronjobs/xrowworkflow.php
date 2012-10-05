@@ -47,7 +47,7 @@ if ( $nodeArrayCount > 0 )
         $nodeArray = $rootNode->subTree( $params );
         foreach ( $nodeArray as $node )
         {
-            $worklfow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
+            $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
             if( $workflow instanceof xrowworkflow )
             {
                 $workflow->offline();
