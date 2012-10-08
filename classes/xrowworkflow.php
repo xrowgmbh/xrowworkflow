@@ -70,7 +70,6 @@ class xrowworkflow extends eZPersistentObject
         ) );
     }
 
-
     /**
      * Update a contentobject's state
      *
@@ -82,21 +81,22 @@ class xrowworkflow extends eZPersistentObject
     static public function updateObjectState( $objectID, $selectedStateIDList )
     {
         $object = eZContentObject::fetch( $objectID );
-
+        
         // we don't need to re-assign states the object currently already has assigned
         $currentStateIDArray = $object->attribute( 'state_id_array' );
         $selectedStateIDList = array_diff( $selectedStateIDList, $currentStateIDArray );
-
+        
         foreach ( $selectedStateIDList as $selectedStateID )
         {
             $state = eZContentObjectState::fetchById( $selectedStateID );
             $object->assignState( $state );
         }
         //call appropriate method from search engine
-        eZSearch::updateObjectState($objectID, $selectedStateIDList);
-
+        eZSearch::updateObjectState( $objectID, $selectedStateIDList );
+        
         eZContentCacheManager::clearContentCacheIfNeeded( $objectID );
     }
+
     function online()
     {
         $object = eZContentObject::fetch( $this->contentobject_id );
@@ -116,8 +116,7 @@ class xrowworkflow extends eZPersistentObject
         eZDebug::writeDebug( __METHOD__ );
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::QUEUE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
-        )
-         );
+        ) );
         eZDebug::writeDebug( __METHOD__ );
     }
 
@@ -127,16 +126,25 @@ class xrowworkflow extends eZPersistentObject
         $db->begin();
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
-        )
-         );
+        ) );
         $this->remove();
         
         // Remove from the flow
         if ( $this->contentobject_id > 0 )
         {
+            $rows = $db->arrayQuery( 'SELECT DISTINCT ezm_block.node_id FROM ezm_pool, ezm_block WHERE object_id = ' . (int) $this->contentobject_id . ' AND ezm_pool.block_id = ezm_block.id' );
             $db->query( 'DELETE FROM ezm_pool WHERE object_id = ' . (int) $this->contentobject_id );
         }
         $db->commit();
+        if ( isset( $rows ) && count( $rows ) )
+        {
+            foreach ( $rows as $row['node_id'] )
+            {
+                $contentObject = eZContentObject::fetchByNodeID( $row['node_id'] );
+                if ( $contentObject )
+                    eZContentCacheManager::clearContentCache( $contentObject->attribute( 'id' ) );
+            }
+        }
         eZDebug::writeDebug( __METHOD__ );
     }
 }
