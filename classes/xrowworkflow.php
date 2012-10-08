@@ -138,7 +138,7 @@ class xrowworkflow extends eZPersistentObject
         $db->commit();
         if ( isset( $rows ) && count( $rows ) )
         {
-            foreach ( $rows as $row['node_id'] )
+            foreach ( $rows as $row )
             {
                 $contentObject = eZContentObject::fetchByNodeID( $row['node_id'] );
                 if ( $contentObject )
