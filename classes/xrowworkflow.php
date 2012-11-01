@@ -108,6 +108,7 @@ class xrowworkflow extends eZPersistentObject
         
         $this->setAttribute( 'start', 0 );
         $this->store();
+        eZContentCacheManager::clearContentCache( $this->contentobject_id );
         eZDebug::writeDebug( __METHOD__ );
     }
 
@@ -145,6 +146,7 @@ class xrowworkflow extends eZPersistentObject
                     eZContentCacheManager::clearContentCache( $contentObject->attribute( 'id' ) );
             }
         }
+        eZContentCacheManager::clearContentCache( $this->contentobject_id );
         eZDebug::writeDebug( __METHOD__ );
     }
 }
