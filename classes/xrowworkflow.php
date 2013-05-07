@@ -33,12 +33,20 @@ class xrowworkflow extends eZPersistentObject
                     'datatype' => 'integer' , 
                     'default' => 0 , 
                     'required' => true 
+                ) , 
+                'action' => array( 
+                    'name' => 'action' , 
+                    'datatype' => 'string' , 
+                    'default' => null , 
+                    'required' => true 
                 ) 
             ) , 
             'keys' => array( 
                 'contentobject_id' 
             ) , 
-            'function_attributes' => array() , 
+            'function_attributes' => array( 
+                "get_action_list" => "getActionList" 
+            ) , 
             'sort' => array( 
                 'contentobject_id' => 'asc' 
             ) , 
@@ -68,6 +76,11 @@ class xrowworkflow extends eZPersistentObject
         return eZPersistentObject::fetchObject( xrowworkflow::definition(), null, array( 
             'contentobject_id' => $contentObjectID 
         ) );
+    }
+
+    function getActionList()
+    {
+        return unserialize( $this->action );
     }
 
     /**
@@ -147,6 +160,52 @@ class xrowworkflow extends eZPersistentObject
             }
         }
         eZContentCacheManager::clearContentCache( $this->contentobject_id );
+        eZDebug::writeDebug( __METHOD__ );
+    }
+
+    function moveTo()
+    {
+        $object = eZContentObject::fetch( $this->contentobject_id );
+        foreach ( $object->attribute( 'assigned_nodes' ) as $node )
+        {
+            if ( ! $node->attribute( 'is_main' ) )
+                $node->remove();
+        }
+        
+        $actionList = $this->attribute( 'get_action_list' );
+        $moveToID = $actionList['ID']['move'];
+        $moveToID = explode( '_', $moveToID[0] );
+        
+        eZContentObjectTreeNodeOperations::move( $object->attribute( 'main_node_id' ), $moveToID[1] );
+        
+        eZDebug::writeDebug( __METHOD__ );
+    }
+
+    function delete()
+    {
+        $actionList = $this->attribute( 'get_action_list' );
+        $deleteIDs = $actionList['ID']['delete'];
+        $deleted = false;
+
+        foreach ( $deleteIDs as $index => $id )
+        {
+            if ( $deleted === false )
+            {
+                $id = explode( '_', $id );
+                switch ( $id[0] )
+                {
+                    case 'eZObject':
+                        eZContentObject::fetch( $this->contentobject_id )->remove();
+                        $deleted = true;
+                        break;
+                    default:
+                        eZContentObjectTreeNode::fetch($id[1])->removeNodeFromTree();
+                        break;
+                }
+            }
+        }
+        if(!$deleted)
+            $this->offline();
         eZDebug::writeDebug( __METHOD__ );
     }
 }

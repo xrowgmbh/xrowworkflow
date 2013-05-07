@@ -7,7 +7,7 @@ $user->loginCurrent();
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
 $nodeID = 1;
 $rootNode = eZContentObjectTreeNode::fetch( $nodeID );
-        /* can`t take multiple extended filters 
+/* can`t take multiple extended filters 
         array( 
             'id' => 'ObjectStateFilter' , 
             'params' => array( 
@@ -20,7 +20,6 @@ $rootNode = eZContentObjectTreeNode::fetch( $nodeID );
         ) , 
         */
 
-
 if ( ! $isQuiet )
 {
     $cli->output( 'Expire content of node "' . $rootNode->attribute( 'name' ) . '" (' . $nodeID . ')' );
@@ -29,12 +28,14 @@ if ( ! $isQuiet )
 
 $params = array( 
     'Limitation' => array() , 
-    'ExtendedAttributeFilter' =>   array( 
-            'id' => 'xrowworkflow_end' , 
-            'params' => array() 
-        )
+    'ExtendedAttributeFilter' => array( 
+        'id' => 'xrowworkflow_end' , 
+        'params' => array() 
+    ) 
 );
+
 $nodeArrayCount = $rootNode->subTreeCount( $params );
+
 if ( $nodeArrayCount > 0 )
 {
     if ( ! $isQuiet )
@@ -48,9 +49,24 @@ if ( $nodeArrayCount > 0 )
         foreach ( $nodeArray as $node )
         {
             $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
-            if( $workflow instanceof xrowworkflow )
+            if ( $workflow instanceof xrowworkflow )
             {
-                $workflow->offline();
+                $action = $workflow->attribute( 'get_action_list' );
+                
+                switch ( $action['action'] )
+                {
+                    case 'move':
+                        $workflow->offline();
+                        $workflow->moveTo();
+                        break;
+                    case 'delete':
+                        $workflow->delete();
+                        break;
+                    default:
+                        $workflow->offline();
+                        break;
+                }
+            
             }
             if ( ! $isQuiet )
             {
@@ -62,7 +78,6 @@ if ( $nodeArrayCount > 0 )
     while ( is_array( $nodeArray ) and count( $nodeArray ) > 0 );
 }
 
-
 if ( ! $isQuiet )
 {
     $cli->output( 'Publishing content of node "' . $rootNode->attribute( 'name' ) . '" (' . $nodeID . ')' );
@@ -71,10 +86,10 @@ if ( ! $isQuiet )
 
 $params = array( 
     'Limitation' => array() , 
-    'ExtendedAttributeFilter' =>   array( 
-            'id' => 'xrowworkflow_start' , 
-            'params' => array() 
-        )
+    'ExtendedAttributeFilter' => array( 
+        'id' => 'xrowworkflow_start' , 
+        'params' => array() 
+    ) 
 );
 $nodeArrayCount = $rootNode->subTreeCount( $params );
 
@@ -91,11 +106,11 @@ if ( $nodeArrayCount > 0 )
         foreach ( $nodeArray as $node )
         {
             $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
-            if( $workflow instanceof xrowworkflow )
+            if ( $workflow instanceof xrowworkflow )
             {
                 $workflow->online();
             }
-        
+            
             if ( ! $isQuiet )
             {
                 $cli->output( 'Publishing node: "' . $node->attribute( 'name' ) . '" (' . $node->attribute( 'node_id' ) . ')' );
