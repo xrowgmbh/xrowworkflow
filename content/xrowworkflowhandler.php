@@ -11,7 +11,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         );
     }
     */
-    
+
     function validateInput( $http, &$module, &$class, $object, &$version, $contentObjectAttributes, $editVersion, $editLanguage, $fromLanguage, $validationParameters )
     {
         //        die(print_r($http));
@@ -49,7 +49,6 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
 
     function fetchInput( $http, &$module, &$class, $object, &$version, $contentObjectAttributes, $editVersion, $editLanguage, $fromLanguage )
     {
-        
         $start = self::getDate( $http->postVariable( 'workflow-start' ) );
         $end = self::getDate( $http->postVariable( 'workflow-end' ) );
         $action = $http->postVariable( 'workflow-action' );

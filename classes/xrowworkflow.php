@@ -94,11 +94,9 @@ class xrowworkflow extends eZPersistentObject
     static public function updateObjectState( $objectID, $selectedStateIDList )
     {
         $object = eZContentObject::fetch( $objectID );
-        
         // we don't need to re-assign states the object currently already has assigned
         $currentStateIDArray = $object->attribute( 'state_id_array' );
         $selectedStateIDList = array_diff( $selectedStateIDList, $currentStateIDArray );
-        
         foreach ( $selectedStateIDList as $selectedStateID )
         {
             $state = eZContentObjectState::fetchById( $selectedStateID );
@@ -106,7 +104,6 @@ class xrowworkflow extends eZPersistentObject
         }
         //call appropriate method from search engine
         eZSearch::updateObjectState( $objectID, $selectedStateIDList );
-        
         eZContentCacheManager::clearContentCacheIfNeeded( $objectID );
     }
 
@@ -118,7 +115,7 @@ class xrowworkflow extends eZPersistentObject
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::ONLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
-        
+
         $this->setAttribute( 'start', 0 );
         $this->store();
         eZContentCacheManager::clearContentCache( $this->contentobject_id );
@@ -142,7 +139,7 @@ class xrowworkflow extends eZPersistentObject
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
         $this->remove();
-        
+
         // Remove from the flow
         if ( $this->contentobject_id > 0 )
         {
@@ -165,20 +162,36 @@ class xrowworkflow extends eZPersistentObject
 
     function moveTo()
     {
+        $actionList = $this->attribute( 'get_action_list' );
+        $moveTo = $actionList['ID']['move'];
+        $moveToArray = explode( '_', $moveTo[0] );
+        $moveToNodeID = $moveToArray[1];
         $object = eZContentObject::fetch( $this->contentobject_id );
+        $deleteIDArray = array();
         foreach ( $object->attribute( 'assigned_nodes' ) as $node )
         {
             if ( ! $node->attribute( 'is_main' ) )
-                $node->remove();
+            {
+                // check children
+                $countChildren = $node->childrenCount();
+                if( $countChildren == 0 )
+                {
+                    $deleteIDArray[] = $node->NodeID;
+                }
+            }
+            else
+            {
+                $mainNodeID = $node->NodeID;
+            }
         }
-        
-        $actionList = $this->attribute( 'get_action_list' );
-        $moveToID = $actionList['ID']['move'];
-        $moveToID = explode( '_', $moveToID[0] );
-        
-        eZContentObjectTreeNodeOperations::move( $object->attribute( 'main_node_id' ), $moveToID[1] );
-        
-        eZDebug::writeDebug( __METHOD__ );
+
+        eZContentObjectTreeNodeOperations::move( $mainNodeID, $moveToNodeID );
+        eZDebug::writeDebug( "Move $mainNodeID to $moveToID[1]", __METHOD__ );
+        if( count( $deleteIDArray ) > 0 )
+        {
+            eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
+            eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+        }
     }
 
     function delete()
@@ -195,17 +208,54 @@ class xrowworkflow extends eZPersistentObject
                 switch ( $id[0] )
                 {
                     case 'eZObject':
-                        eZContentObject::fetch( $this->contentobject_id )->remove();
-                        $deleted = true;
+                        $object = eZContentObject::fetch( $this->contentobject_id );
+                        foreach ( $object->attribute( 'assigned_nodes' ) as $node )
+                        {
+                            // check children
+                            $countChildren = $node->childrenCount();
+                            if( $countChildren == 0 )
+                            {
+                                $deleteIDArray[] = $node->NodeID;
+                            }
+                        }
+                        $eZObject = true;
                         break;
                     default:
-                        eZContentObjectTreeNode::fetch($id[1])->removeNodeFromTree();
+                        $node = eZContentObjectTreeNode::fetch( $id[1] );
+                        // check children
+                        $countChildren = $node->childrenCount();
+                        if( $countChildren == 0 )
+                        {
+                            $deleteIDArray[] = $node->NodeID;
+                        }
                         break;
                 }
             }
         }
-        if(!$deleted)
+        if( $eZObject )
+        {
+            if ( eZOperationHandler::operationIsAvailable( 'content_delete' ) )
+            {
+                $operationResult = eZOperationHandler::execute( 'content',
+                                                                'delete',
+                                                                array( 'node_id_list' => $deleteIDArray,
+                                                                       'move_to_trash' => false ),
+                                                                null, true );
+            }
+            else
+            {
+                eZContentOperationCollection::deleteObject( $deleteIDArray, false );
+                eZDebug::writeDebug( "Move action: remove Object and NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+            }
+        }
+        else
+        {
             $this->offline();
-        eZDebug::writeDebug( __METHOD__ );
+            if( count( $deleteIDArray ) > 0 )
+            {
+                eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
+                eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+            }
+        }
     }
 }
