@@ -122,15 +122,15 @@ class xrowworkflow extends eZPersistentObject
         eZDebug::writeDebug( __METHOD__ );
     }
 
-    /*function queue()
+    function queue()
     {
         eZDebug::writeDebug( __METHOD__ );
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::QUEUE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
         eZDebug::writeDebug( __METHOD__ );
-    }*/
-    
+    }
+
     function clear( $removeEZFlowBlocks = true )
     {
         $db = eZDB::instance();
