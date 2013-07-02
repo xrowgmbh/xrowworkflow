@@ -122,26 +122,22 @@ class xrowworkflow extends eZPersistentObject
         eZDebug::writeDebug( __METHOD__ );
     }
 
-    function queue()
+    /*function queue()
     {
         eZDebug::writeDebug( __METHOD__ );
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::QUEUE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
         eZDebug::writeDebug( __METHOD__ );
-    }
-
-    function offline()
+    }*/
+    
+    function clear( $removeEZFlowBlocks = true )
     {
         $db = eZDB::instance();
         $db->begin();
-        self::updateObjectState( $this->contentobject_id, array( 
-            eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
-        ) );
         $this->remove();
-
         // Remove from the flow
-        if ( $this->contentobject_id > 0 )
+        if ( $removeEZFlowBlocks && $this->contentobject_id > 0 )
         {
             $rows = $db->arrayQuery( 'SELECT DISTINCT ezm_block.node_id FROM ezm_pool, ezm_block WHERE object_id = ' . (int) $this->contentobject_id . ' AND ezm_pool.block_id = ezm_block.id' );
             $db->query( 'DELETE FROM ezm_pool WHERE object_id = ' . (int) $this->contentobject_id );
@@ -157,6 +153,16 @@ class xrowworkflow extends eZPersistentObject
             }
         }
         eZContentCacheManager::clearContentCache( $this->contentobject_id );
+	}
+
+    function offline()
+    {
+        $db = eZDB::instance();
+        $db->begin();
+        self::updateObjectState( $this->contentobject_id, array( 
+            eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
+        ) );
+        $this->clear();
         eZDebug::writeDebug( __METHOD__ );
     }
 
@@ -192,6 +198,8 @@ class xrowworkflow extends eZPersistentObject
             eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
             eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
         }
+        eZDebug::writeDebug( __METHOD__ );
+        $this->clear( false );
     }
 
     function delete()
@@ -245,17 +253,18 @@ class xrowworkflow extends eZPersistentObject
             else
             {
                 eZContentOperationCollection::deleteObject( $deleteIDArray, false );
-                eZDebug::writeDebug( "Move action: remove Object and NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+                eZDebug::writeDebug( "Delete action: remove Object and NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
             }
+            $this->clear();
         }
         else
         {
-            $this->offline();
             if( count( $deleteIDArray ) > 0 )
             {
                 eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
-                eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+                eZDebug::writeDebug( "Delete action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
             }
         }
+        eZDebug::writeDebug( __METHOD__ );
     }
 }
