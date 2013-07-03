@@ -15,6 +15,7 @@ if ( ! $isQuiet )
 }
 
 $params = array( 
+    'Offset' => 0,
     'Limitation' => array() , 
     'ExtendedAttributeFilter' => array( 
         'id' => 'xrowworkflow_end' , 
@@ -34,46 +35,50 @@ if ( $nodeArrayCount > 0 )
     do
     {
         $nodeArray = $rootNode->subTree( $params );
-        foreach ( $nodeArray as $node )
+        if( is_array( $nodeArray ) && count( $nodeArray ) > 0 )
         {
-            if( $node instanceof eZContentObjectTreeNode )
+            foreach ( $nodeArray as $node )
             {
-                $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
-                if ( $workflow instanceof xrowworkflow )
+                if( $node instanceof eZContentObjectTreeNode )
                 {
-                    $action = $workflow->attribute( 'get_action_list' );
-                    switch ( $action['action'] )
+                    $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
+                    if ( $workflow instanceof xrowworkflow )
                     {
-                        case 'move':
-                            $workflow->moveTo();
-                            if ( ! $isQuiet )
-                            {
-                                $cli->output( "Move '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
-                            }
-                            break;
-                        case 'delete':
-                            $workflow->delete();
-                            if ( ! $isQuiet )
-                            {
-                                $cli->output( "Delete '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
-                            }
-                            break;
-                        default:
-                            $workflow->offline();
-                            if ( ! $isQuiet )
-                            {
-                                $cli->output( "Set offline '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
-                            }
-                            break;
+                        $action = $workflow->attribute( 'get_action_list' );
+                        switch ( $action['action'] )
+                        {
+                            case 'move':
+                                $workflow->moveTo();
+                                if ( ! $isQuiet )
+                                {
+                                    $cli->output( "Move '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
+                                }
+                                break;
+                            case 'delete':
+                                $workflow->delete();
+                                if ( ! $isQuiet )
+                                {
+                                    $cli->output( "Delete '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
+                                }
+                                break;
+                            default:
+                                $workflow->offline();
+                                if ( ! $isQuiet )
+                                {
+                                    $cli->output( "Set offline '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
+                                }
+                                break;
+                        }
                     }
                 }
+                else
+                {
+                    eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
+                }
             }
-            else
-            {
-                eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
-            }
+            $params["Offset"] = $params["Offset"] + count( $nodeArray );
+            eZContentObject::clearCache();
         }
-        eZContentObject::clearCache();
     }
     while ( is_array( $nodeArray ) and count( $nodeArray ) > 0 );
 }
