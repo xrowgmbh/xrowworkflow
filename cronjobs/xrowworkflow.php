@@ -7,18 +7,6 @@ $user->loginCurrent();
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
 $nodeID = 1;
 $rootNode = eZContentObjectTreeNode::fetch( $nodeID );
-/* can`t take multiple extended filters 
-        array( 
-            'id' => 'ObjectStateFilter' , 
-            'params' => array( 
-                'states_identifiers' => array( 
-                    xrowworkflow::STATE_GROUP . '/' . xrowworkflow::ONLINE , 
-                    xrowworkflow::STATE_GROUP . '/' . xrowworkflow::QUEUE 
-                ) , 
-                'operator' => 'or' 
-            ) 
-        ) , 
-        */
 
 if ( ! $isQuiet )
 {
@@ -40,7 +28,7 @@ if ( $nodeArrayCount > 0 )
 {
     if ( ! $isQuiet )
     {
-        $cli->output( "Hiding {$nodeArrayCount} node(s)." );
+        $cli->output( "Do xrowworkflow for {$nodeArrayCount} node(s)." );
     }
     $params['Limit'] = 100;
     do
@@ -48,29 +36,41 @@ if ( $nodeArrayCount > 0 )
         $nodeArray = $rootNode->subTree( $params );
         foreach ( $nodeArray as $node )
         {
-            $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
-            if ( $workflow instanceof xrowworkflow )
+            if( $node instanceof eZContentObjectTreeNode )
             {
-                $action = $workflow->attribute( 'get_action_list' );
-                
-                switch ( $action['action'] )
+                $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
+                if ( $workflow instanceof xrowworkflow )
                 {
-                    case 'move':
-                        $workflow->offline();
-                        $workflow->moveTo();
-                        break;
-                    case 'delete':
-                        $workflow->delete();
-                        break;
-                    default:
-                        $workflow->offline();
-                        break;
+                    $action = $workflow->attribute( 'get_action_list' );
+                    switch ( $action['action'] )
+                    {
+                        case 'move':
+                            $workflow->moveTo();
+                            if ( ! $isQuiet )
+                            {
+                                $cli->output( "Move '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
+                            }
+                            break;
+                        case 'delete':
+                            $workflow->delete();
+                            if ( ! $isQuiet )
+                            {
+                                $cli->output( "Delete '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
+                            }
+                            break;
+                        default:
+                            $workflow->offline();
+                            if ( ! $isQuiet )
+                            {
+                                $cli->output( "Set offline '" . $node->attribute( 'name' ) . "' (" . $node->NodeID . ")." );
+                            }
+                            break;
+                    }
                 }
-            
             }
-            if ( ! $isQuiet )
+            else
             {
-                $cli->output( 'Hiding node: "' . $node->attribute( 'name' ) . '" (' . $node->attribute( 'node_id' ) . ')' );
+                eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
             }
         }
         eZContentObject::clearCache();
@@ -105,15 +105,22 @@ if ( $nodeArrayCount > 0 )
         $nodeArray = $rootNode->subTree( $params );
         foreach ( $nodeArray as $node )
         {
-            $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
-            if ( $workflow instanceof xrowworkflow )
+            if( $node instanceof eZContentObjectTreeNode )
             {
-                $workflow->online();
+                $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
+                if ( $workflow instanceof xrowworkflow )
+                {
+                    $workflow->online();
+                }
+                
+                if ( ! $isQuiet )
+                {
+                    $cli->output( 'Publishing node: "' . $node->attribute( 'name' ) . '" (' . $node->attribute( 'node_id' ) . ')' );
+                }
             }
-            
-            if ( ! $isQuiet )
+            else
             {
-                $cli->output( 'Publishing node: "' . $node->attribute( 'name' ) . '" (' . $node->attribute( 'node_id' ) . ')' );
+                eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
             }
         }
         eZContentObject::clearCache();

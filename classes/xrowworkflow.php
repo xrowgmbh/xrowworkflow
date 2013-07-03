@@ -176,18 +176,25 @@ class xrowworkflow extends eZPersistentObject
         $deleteIDArray = array();
         foreach ( $object->attribute( 'assigned_nodes' ) as $node )
         {
-            if ( ! $node->attribute( 'is_main' ) )
+            if( $node instanceof eZContentObjectTreeNode )
             {
-                // check children
-                $countChildren = $node->childrenCount();
-                if( $countChildren == 0 )
+                if ( ! $node->attribute( 'is_main' ) )
                 {
-                    $deleteIDArray[] = $node->NodeID;
+                    // check children
+                    $countChildren = $node->childrenCount();
+                    if( $countChildren == 0 )
+                    {
+                        $deleteIDArray[] = $node->NodeID;
+                    }
+                }
+                else
+                {
+                    $mainNodeID = $node->NodeID;
                 }
             }
             else
             {
-                $mainNodeID = $node->NodeID;
+                eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
             }
         }
 
@@ -217,7 +224,30 @@ class xrowworkflow extends eZPersistentObject
                 {
                     case 'eZObject':
                         $object = eZContentObject::fetch( $this->contentobject_id );
-                        foreach ( $object->attribute( 'assigned_nodes' ) as $node )
+                        if( $object instanceof eZContentObject )
+                        {
+                            foreach ( $object->attribute( 'assigned_nodes' ) as $node )
+                            {
+                                if( $node instanceof eZContentObjectTreeNode )
+                                {
+                                    // check children
+                                    $countChildren = $node->childrenCount();
+                                    if( $countChildren == 0 )
+                                    {
+                                        $deleteIDArray[] = $node->NodeID;
+                                    }
+                                }
+                                else
+                                {
+                                    eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
+                                }
+                            }
+                            $eZObject = true;
+                        }
+                        break;
+                    default:
+                        $node = eZContentObjectTreeNode::fetch( $id[1] );
+                        if( $node instanceof eZContentObjectTreeNode )
                         {
                             // check children
                             $countChildren = $node->childrenCount();
@@ -226,15 +256,9 @@ class xrowworkflow extends eZPersistentObject
                                 $deleteIDArray[] = $node->NodeID;
                             }
                         }
-                        $eZObject = true;
-                        break;
-                    default:
-                        $node = eZContentObjectTreeNode::fetch( $id[1] );
-                        // check children
-                        $countChildren = $node->childrenCount();
-                        if( $countChildren == 0 )
+                        else
                         {
-                            $deleteIDArray[] = $node->NodeID;
+                            eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
                         }
                         break;
                 }
