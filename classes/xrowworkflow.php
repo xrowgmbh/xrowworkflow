@@ -157,8 +157,6 @@ class xrowworkflow extends eZPersistentObject
 
     function offline()
     {
-        $db = eZDB::instance();
-        $db->begin();
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
