@@ -110,8 +110,12 @@ class xrowworkflow extends eZPersistentObject
     function online()
     {
         $object = eZContentObject::fetch( $this->contentobject_id );
-        $object->setAttribute( 'published', $this->attribute( 'start' ) );
-        $object->store();
+        if ( $this->attribute( 'start' ) > 0 )
+        {
+            $object->setAttribute( 'published', $this->attribute( 'start' ) );
+            $object->store();
+        }
+
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::ONLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );

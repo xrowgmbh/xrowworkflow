@@ -16,6 +16,8 @@ if ( ! $isQuiet )
 
 $params = array( 
     'Offset' => 0,
+    'MainNodeOnly' => true,
+    'IgnoreVisibility' => true,
     'Limitation' => array() , 
     'ExtendedAttributeFilter' => array( 
         'id' => 'xrowworkflow_end' , 
@@ -90,6 +92,8 @@ if ( ! $isQuiet )
 }
 
 $params = array( 
+    'MainNodeOnly' => true,
+    'IgnoreVisibility' => true,
     'Limitation' => array() , 
     'ExtendedAttributeFilter' => array( 
         'id' => 'xrowworkflow_start' , 
