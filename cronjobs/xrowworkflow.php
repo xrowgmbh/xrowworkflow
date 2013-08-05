@@ -5,8 +5,7 @@ $user = eZUser::fetch( eZINI::instance()->variable( 'UserSettings', 'UserCreator
 $user->loginCurrent();
 
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
-$nodeID = 1;
-//$rootNode = eZContentObjectTreeNode::fetch( $nodeID );
+$nodeID = 2;
 
 if ( ! $isQuiet )
 {
@@ -16,18 +15,19 @@ if ( ! $isQuiet )
 
 $params = array( 
     'Limitation' => array(),
+    'IgnoreVisibility' => true,
     'ExtendedAttributeFilter' => array( 
         'id' => 'xrowworkflow_end', 
         'params' => array() 
     ) 
 );
 
-$nodeArrayCount = eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
+$nodeArrayCount = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
 if ( $nodeArrayCount > 0 )
 {
     if ( ! $isQuiet )
     {
-        $cli->output( "Do END-xrowworkflow for {$nodeArrayCount} node(s)." );
+        $cli->output( "Do END-xrowworkflow for " . $nodeArrayCount . " node(s)." );
     }
     $params['Limit'] = 50;
     $params['Offset'] = 0;
@@ -91,12 +91,13 @@ if ( ! $isQuiet )
 
 $params = array( 
     'Limitation' => array(),
+    'IgnoreVisibility' => true,
     'ExtendedAttributeFilter' => array( 
         'id' => 'xrowworkflow_start', 
         'params' => array() 
     ) 
 );
-$nodeArrayCount = eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
+$nodeArrayCount = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
 if ( $nodeArrayCount > 0 )
 {
     if ( ! $isQuiet )
