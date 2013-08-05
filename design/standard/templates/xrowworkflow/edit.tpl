@@ -76,7 +76,8 @@
                 <input type="radio" id="workflow-action-delete" style="position: relative; top: -55px" name="workflow-action" value="delete" {if $workflowdata.get_action_list.action|eq( 'delete' )}checked=true{/if} />
                 <select name="workflow-delete-id[]" id="workflow-delete-ids" multiple="multiple">
                     <option value="eZObject_{$attribute.contentobject_id}"{if $nochildren|not()} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZObject_',$attribute.contentobject_id))}selected="selected"{/if}>{'Object'|i18n( 'xrowworkflow' )}: {$attribute.object.main_node.url_alias|wash}</option>
-                    <option value="eZNode_{$main_node.node_id}"{if $main_node.children_count|gt( 0 )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$main_node.node_id))}selected="selected"{/if}>{'Main Node'|i18n( 'xrowworkflow' )}: {$main_node.url_alias|wash}</option>
+                    {* main node only enabled if no children or there are more assigned_nodes *}
+                    <option value="eZNode_{$main_node.node_id}"{if or( $main_node.children_count|gt( 0 ), $assigned_nodes|count|eq( 0 ) )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$main_node.node_id))}selected="selected"{/if}>{'Main Node'|i18n( 'xrowworkflow' )}: {$main_node.url_alias|wash}</option>
                 {if $assigned_nodes|count|gt( 0 )}
                 {foreach $assigned_nodes as $anode}
                     <option value="eZNode_{$anode.node_id}"{if $anode.children_count|gt( 0 )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$anode.node_id))}selected="selected"{/if}>{'Node'|i18n( 'xrowworkflow' )}: {$anode.url_alias|wash}</option>

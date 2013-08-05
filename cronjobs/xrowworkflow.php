@@ -5,36 +5,35 @@ $user = eZUser::fetch( eZINI::instance()->variable( 'UserSettings', 'UserCreator
 $user->loginCurrent();
 
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
-$nodeID = 1;
-$rootNode = eZContentObjectTreeNode::fetch( $nodeID );
+$nodeID = 2;
 
 if ( ! $isQuiet )
 {
-    $cli->output( 'Expire content of node "' . $rootNode->attribute( 'name' ) . '" (' . $nodeID . ')' );
+    $cli->output( 'Expire content of START node.' );
     $cli->output();
 }
 
 $params = array( 
-    'Offset' => 0,
-    'Limitation' => array() , 
+    'Limitation' => array(),
+    'IgnoreVisibility' => true,
     'ExtendedAttributeFilter' => array( 
-        'id' => 'xrowworkflow_end' , 
+        'id' => 'xrowworkflow_end', 
         'params' => array() 
     ) 
 );
 
-$nodeArrayCount = $rootNode->subTreeCount( $params );
-
+$nodeArrayCount = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
 if ( $nodeArrayCount > 0 )
 {
     if ( ! $isQuiet )
     {
-        $cli->output( "Do xrowworkflow for {$nodeArrayCount} node(s)." );
+        $cli->output( "Do END-xrowworkflow for " . $nodeArrayCount . " node(s)." );
     }
-    $params['Limit'] = 100;
+    $params['Limit'] = 50;
+    $params['Offset'] = 0;
     do
     {
-        $nodeArray = $rootNode->subTree( $params );
+        $nodeArray = eZContentObjectTreeNode::subTreeByNodeID( $params, $nodeID );
         if( is_array( $nodeArray ) && count( $nodeArray ) > 0 )
         {
             foreach ( $nodeArray as $node )
@@ -75,6 +74,7 @@ if ( $nodeArrayCount > 0 )
                 {
                     eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
                 }
+                echo ".";
             }
             $params["Offset"] = $params["Offset"] + count( $nodeArray );
             eZContentObject::clearCache();
@@ -85,19 +85,19 @@ if ( $nodeArrayCount > 0 )
 
 if ( ! $isQuiet )
 {
-    $cli->output( 'Publishing content of node "' . $rootNode->attribute( 'name' ) . '" (' . $nodeID . ')' );
+    $cli->output( 'Publishing content of node START.' );
     $cli->output();
 }
 
 $params = array( 
-    'Limitation' => array() , 
+    'Limitation' => array(),
+    'IgnoreVisibility' => true,
     'ExtendedAttributeFilter' => array( 
-        'id' => 'xrowworkflow_start' , 
+        'id' => 'xrowworkflow_start', 
         'params' => array() 
     ) 
 );
-$nodeArrayCount = $rootNode->subTreeCount( $params );
-
+$nodeArrayCount = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
 if ( $nodeArrayCount > 0 )
 {
     if ( ! $isQuiet )
@@ -105,30 +105,36 @@ if ( $nodeArrayCount > 0 )
         $cli->output( "Publishing {$nodeArrayCount} node(s)." );
     }
     $params['Limit'] = 100;
+    $params['Offset'] = 0;
     do
     {
-        $nodeArray = $rootNode->subTree( $params );
-        foreach ( $nodeArray as $node )
+        $nodeArray = eZContentObjectTreeNode::subTreeByNodeID( $params, $nodeID );
+        if( is_array( $nodeArray ) && count( $nodeArray ) > 0 )
         {
-            if( $node instanceof eZContentObjectTreeNode )
+            foreach ( $nodeArray as $node )
             {
-                $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
-                if ( $workflow instanceof xrowworkflow )
+                if( $node instanceof eZContentObjectTreeNode )
                 {
-                    $workflow->online();
+                    $workflow = xrowworkflow::fetchByContentObjectID( $node->ContentObjectID );
+                    if ( $workflow instanceof xrowworkflow )
+                    {
+                        $workflow->online();
+                    }
+                    
+                    if ( ! $isQuiet )
+                    {
+                        $cli->output( 'Publishing node: "' . $node->attribute( 'name' ) . '" (' . $node->attribute( 'node_id' ) . ')' );
+                    }
                 }
-                
-                if ( ! $isQuiet )
+                else
                 {
-                    $cli->output( 'Publishing node: "' . $node->attribute( 'name' ) . '" (' . $node->attribute( 'node_id' ) . ')' );
+                    eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
                 }
+                echo ".";
             }
-            else
-            {
-                eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
-            }
+            $params["Offset"] = $params["Offset"] + count( $nodeArray );
+            eZContentObject::clearCache();
         }
-        eZContentObject::clearCache();
     }
     while ( is_array( $nodeArray ) and count( $nodeArray ) > 0 );
 }

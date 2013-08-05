@@ -116,8 +116,9 @@ class xrowworkflow extends eZPersistentObject
             eZContentObjectState::fetchByIdentifier( xrowworkflow::ONLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
 
-        $this->setAttribute( 'start', 0 );
-        $this->store();
+#        $this->setAttribute( 'start', 0 );
+#        $this->store();
+        $this->remove();
         eZContentCacheManager::clearContentCache( $this->contentobject_id );
         eZDebug::writeDebug( __METHOD__ );
     }
@@ -131,36 +132,13 @@ class xrowworkflow extends eZPersistentObject
         eZDebug::writeDebug( __METHOD__ );
     }
 
-    function clear( $removeEZFlowBlocks = true )
-    {
-        $this->remove();
-        // Remove from the flow
-        if ( $removeEZFlowBlocks && $this->contentobject_id > 0 )
-        {
-            $db = eZDB::instance();
-            $rows = $db->arrayQuery( 'SELECT DISTINCT ezm_block.node_id FROM ezm_pool, ezm_block WHERE object_id = ' . (int) $this->contentobject_id . ' AND ezm_pool.block_id = ezm_block.id' );
-            $db->begin();
-            $db->query( 'DELETE FROM ezm_pool WHERE object_id = ' . (int) $this->contentobject_id );
-            $db->commit();
-        }
-        if ( isset( $rows ) && count( $rows ) )
-        {
-            foreach ( $rows as $row )
-            {
-                $contentObject = eZContentObject::fetchByNodeID( $row['node_id'] );
-                if ( $contentObject )
-                    eZContentCacheManager::clearContentCache( $contentObject->attribute( 'id' ) );
-            }
-        }
-        eZContentCacheManager::clearContentCache( $this->contentobject_id );
-    }
-
     function offline()
     {
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
         $this->clear();
+        $this->remove();
         eZDebug::writeDebug( __METHOD__ );
     }
 
@@ -205,6 +183,7 @@ class xrowworkflow extends eZPersistentObject
         }
         eZDebug::writeDebug( __METHOD__ );
         $this->clear( false );
+        $this->remove();
     }
 
     function delete()
@@ -288,5 +267,31 @@ class xrowworkflow extends eZPersistentObject
             }
         }
         eZDebug::writeDebug( __METHOD__ );
+        $this->remove();
+    }
+
+    function clear( $removeEZFlowBlocks = true )
+    {
+        $db = eZDB::instance();
+        // Remove from the flow
+        if ( $removeEZFlowBlocks && $this->contentobject_id > 0 )
+        {
+            $db->query( 'DELETE FROM ezm_pool WHERE object_id = ' . (int) $this->contentobject_id );
+        }
+        if( $this->contentobject_id > 0 )
+        {
+            $rows = $db->arrayQuery( 'SELECT DISTINCT ezm_block.node_id FROM ezm_pool, ezm_block WHERE object_id = ' . (int) $this->contentobject_id . ' AND ezm_pool.block_id = ezm_block.id' );
+        }
+
+        if ( isset( $rows ) && count( $rows ) )
+        {
+            foreach ( $rows as $row )
+            {
+                $contentObject = eZContentObject::fetchByNodeID( $row['node_id'] );
+                if ( $contentObject )
+                    eZContentCacheManager::clearContentCache( $contentObject->attribute( 'id' ) );
+            }
+        }
+        eZContentCacheManager::clearContentCache( $this->contentobject_id );
     }
 }

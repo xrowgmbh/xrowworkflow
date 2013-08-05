@@ -2,29 +2,18 @@
 
 class xrowworkflowhandler extends eZContentObjectEditHandler
 {
-
-    /*
-    static function storeActionList()
-    {
-        return array( 
-            'WorkflowSet' 
-        );
-    }
-    */
-
     function validateInput( $http, &$module, &$class, $object, &$version, $contentObjectAttributes, $editVersion, $editLanguage, $fromLanguage, $validationParameters )
     {
-        //        die(print_r($http));
         //Check for states
         $result = array( 
             'is_valid' => true , 
             'warnings' => array() 
         );
-        
+
         $now = new DateTime();
         $start = self::getDate( $http->postVariable( 'workflow-start' ) );
         $end = self::getDate( $http->postVariable( 'workflow-end' ) );
-        
+
         if ( $start < $now )
         {
             $result['warnings'][] = array( 
@@ -43,72 +32,79 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                 'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Select a expiry date newer then the publication date.' ) 
             );
         }
-        
+
         return $result;
     }
 
     function fetchInput( $http, &$module, &$class, $object, &$version, $contentObjectAttributes, $editVersion, $editLanguage, $fromLanguage )
     {
-        $start = self::getDate( $http->postVariable( 'workflow-start' ) );
-        $end = self::getDate( $http->postVariable( 'workflow-end' ) );
-        $action = $http->postVariable( 'workflow-action' );
-        $id = ( ! is_array( $http->postVariable( 'workflow-' . $action . '-id' ) ) ) ? array( 
-            'eZNode_' . $http->postVariable( 'workflow-' . $action . '-id' ) 
-        ) : $http->postVariable( 'workflow-' . $action . '-id' );
-        $customActionButton = $http->postVariable( 'CustomActionButton' );
-        
+        $start = 0;
+        $end = 0;
+        $action = '';
+        if( $http->hasPostVariable( 'workflow-start' ) )
+            $start = self::getDate( $http->postVariable( 'workflow-start' ) );
+        if( $http->hasPostVariable( 'workflow-end' ) )
+            $end = self::getDate( $http->postVariable( 'workflow-end' ) );
+        if( $http->hasPostVariable( 'workflow-action' ) )
+            $action = $http->postVariable( 'workflow-action' );
         $row = array( 
             'contentobject_id' => $object->ID 
         );
-        if ( $start )
+        if ( $start && $start > 0 )
         {
             $row['start'] = $start->getTimestamp();
         }
-        if ( $end )
+        if ( $end && $end > 0 )
         {
             $row['end'] = $end->getTimestamp();
         }
-        if ( $action )
+        if( $action != '' && $action != 'offline' )
         {
+            $id = ( ! is_array( $http->postVariable( 'workflow-' . $action . '-id' ) ) ) ? array( 
+                'eZNode_' . $http->postVariable( 'workflow-' . $action . '-id' ) 
+            ) : $http->postVariable( 'workflow-' . $action . '-id' );
             if ( $action == 'move' )
             {
-                if ( $customActionButton[$object->attribute( 'id' ) . '_browse_related_node'] )
+                if( $http->hasPostVariable( 'CustomActionButton' ) )
                 {
-                    /*
-                    /**
-                     * Fetch array of container classes
-                     *
-                    $classes = eZPersistentObject::fetchObjectList( eZContentClass::definition(), array( 
-                        'identifier' 
-                    ), array( 
-                        'is_container' => 1 
-                    ), null, null, false );
-                    /**
-                     * Prepare array of allowed class identifiers based on above fetch results
-                     
-                    $allowedClasses = array();
-                    foreach ( $classes as $class )
+                    $customActionButton = $http->postVariable( 'CustomActionButton' );
+                    if ( isset( $customActionButton[$object->attribute( 'id' ) . '_browse_related_node'] ) )
                     {
-                        $allowedClasses[] = $class['identifier'];
+                        /*
+                        /**
+                         * Fetch array of container classes
+                         *
+                        $classes = eZPersistentObject::fetchObjectList( eZContentClass::definition(), array( 
+                            'identifier' 
+                        ), array( 
+                            'is_container' => 1 
+                        ), null, null, false );
+                        /**
+                         * Prepare array of allowed class identifiers based on above fetch results
+                         
+                        $allowedClasses = array();
+                        foreach ( $classes as $class )
+                        {
+                            $allowedClasses[] = $class['identifier'];
+                        }
+                        */
+                        $browseParameters = array( 
+                            'action_name' => 'AddNodeToMove' , 
+                            'browse_custom_action' => array( 
+                                'name' => 'CustomActionButton[' . $object->attribute( 'id' ) . '_set_related_node]' , 
+                                'value' => $object->attribute( 'id' ) 
+                            ) , 
+    //                        'class_array' => $allowedClasses , 
+                            'persistent_data' => array( 
+                                'HasObjectInput' => 0 
+                            ) , 
+                            'from_page' => '/content/edit/' . $object->attribute( 'id' ) . '/' . $editVersion . '/' . $editLanguage . '' 
+                        );
+                        
+                        return eZContentBrowse::browse( $browseParameters, $module );
                     }
-                    */
-                    $browseParameters = array( 
-                        'action_name' => 'AddNodeToMove' , 
-                        'browse_custom_action' => array( 
-                            'name' => 'CustomActionButton[' . $object->attribute( 'id' ) . '_set_related_node]' , 
-                            'value' => $object->attribute( 'id' ) 
-                        ) , 
-//                        'class_array' => $allowedClasses , 
-                        'persistent_data' => array( 
-                            'HasObjectInput' => 0 
-                        ) , 
-                        'from_page' => '/content/edit/' . $object->attribute( 'id' ) . '/' . $editVersion . '/' . $editLanguage . '' 
-                    );
-                    
-                    return eZContentBrowse::browse( $browseParameters, $module );
                 }
             }
-            
             $row['action'] = serialize( array( 
                 'action' => $action , 
                 'ID' => array( 
@@ -117,7 +113,6 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
             ) );
         }
         $obj = new xrowworkflow( $row );
-        
         $obj->store();
     }
 
