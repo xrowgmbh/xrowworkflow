@@ -11,109 +11,142 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         );
 
         $now = new DateTime();
-        $start = self::getDate( $http->postVariable( 'workflow-start' ) );
-        $end = self::getDate( $http->postVariable( 'workflow-end' ) );
-
-        if ( $start < $now )
+        $start = false;
+        $end = false;
+        $action = '';
+        if( $http->hasPostVariable( 'workflow-action' ) )
+            $action = $http->postVariable( 'workflow-action' );
+        if( $http->hasPostVariable( 'workflow-start' ) )
         {
+            $startArray = $http->postVariable( 'workflow-start' );
+            if( isset( $startArray['date'] ) && $startArray['date'] != '' )
+                $start = self::getDate( $startArray );
+        }
+        if( $http->hasPostVariable( 'workflow-end' ) )
+        {
+            $endArray = $http->postVariable( 'workflow-end' );
+            if( isset( $endArray['date'] ) && $endArray['date'] != '' )
+                $end = self::getDate( $endArray );
+        }
+        if ( $start && $start < $now )
+        {
+            $result['is_valid'] = false; 
             $result['warnings'][] = array( 
-                'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Select a publication date in the future.' ) 
+                'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Workflow: select a publication date in the future.' ) 
             );
         }
-        if ( $end < $now )
+        if ( $end && $end < $now )
         {
+            $result['is_valid'] = false;
             $result['warnings'][] = array( 
-                'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Select a expiry date in the future.' ) 
+                'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Workflow: select an expiry date in the future.' ) 
             );
         }
-        if ( $end < $start )
+        /*if ( $end && $end < $start )
         {
+            $result['is_valid'] = false;
             $result['warnings'][] = array( 
-                'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Select a expiry date newer then the publication date.' ) 
+                'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Workflow: select an expiry date newer then the publication date.' ) 
             );
-        }
-
+        }*/
         return $result;
     }
 
     function fetchInput( $http, &$module, &$class, $object, &$version, $contentObjectAttributes, $editVersion, $editLanguage, $fromLanguage )
     {
-        $start = 0;
-        $end = 0;
+        $start = false;
+        $end = false;
         $action = '';
-        if( $http->hasPostVariable( 'workflow-start' ) )
-            $start = self::getDate( $http->postVariable( 'workflow-start' ) );
-        if( $http->hasPostVariable( 'workflow-end' ) )
-            $end = self::getDate( $http->postVariable( 'workflow-end' ) );
+
         if( $http->hasPostVariable( 'workflow-action' ) )
             $action = $http->postVariable( 'workflow-action' );
+        // important for online workflow
+        if( $http->hasPostVariable( 'workflow-start' ) )
+        {
+            $startArray = $http->postVariable( 'workflow-start' );
+            if( isset( $startArray['date'] ) && $startArray['date'] != '' )
+                $start = self::getDate( $startArray );
+        }
+        if( $http->hasPostVariable( 'workflow-end' ) )
+        {
+            $endArray = $http->postVariable( 'workflow-end' );
+            if( isset( $endArray['date'] ) && $endArray['date'] != '' )
+                $end = self::getDate( $endArray );
+        }
         $row = array( 
             'contentobject_id' => $object->ID 
         );
-        if ( $start && $start > 0 )
-        {
-            $row['start'] = $start->getTimestamp();
-        }
-        if ( $end && $end > 0 )
+        if( $action != '' && $end )
         {
             $row['end'] = $end->getTimestamp();
         }
-        if( $action != '' && $action != 'offline' )
+        elseif ( $start )
         {
-            $id = ( ! is_array( $http->postVariable( 'workflow-' . $action . '-id' ) ) ) ? array( 
-                'eZNode_' . $http->postVariable( 'workflow-' . $action . '-id' ) 
-            ) : $http->postVariable( 'workflow-' . $action . '-id' );
-            if ( $action == 'move' )
+            $row['start'] = $start->getTimestamp();
+        }
+        if ( $action == 'move' )
+        {
+            if( $http->hasPostVariable( 'CustomActionButton' ) )
             {
-                if( $http->hasPostVariable( 'CustomActionButton' ) )
+                $customActionButton = $http->postVariable( 'CustomActionButton' );
+                if ( isset( $customActionButton[$object->attribute( 'id' ) . '_browse_related_node'] ) )
                 {
-                    $customActionButton = $http->postVariable( 'CustomActionButton' );
-                    if ( isset( $customActionButton[$object->attribute( 'id' ) . '_browse_related_node'] ) )
+                    $ignoreNodesSelect = array();
+                    $ignoreNodesSelectSubtree = array();
+                    if( $http->hasPostVariable( 'ignoreNodesSelect' ) )
                     {
-                        /*
-                        /**
-                         * Fetch array of container classes
-                         *
-                        $classes = eZPersistentObject::fetchObjectList( eZContentClass::definition(), array( 
-                            'identifier' 
-                        ), array( 
-                            'is_container' => 1 
-                        ), null, null, false );
-                        /**
-                         * Prepare array of allowed class identifiers based on above fetch results
-                         
-                        $allowedClasses = array();
-                        foreach ( $classes as $class )
-                        {
-                            $allowedClasses[] = $class['identifier'];
-                        }
-                        */
-                        $browseParameters = array( 
-                            'action_name' => 'AddNodeToMove' , 
-                            'browse_custom_action' => array( 
-                                'name' => 'CustomActionButton[' . $object->attribute( 'id' ) . '_set_related_node]' , 
-                                'value' => $object->attribute( 'id' ) 
-                            ) , 
-    //                        'class_array' => $allowedClasses , 
-                            'persistent_data' => array( 
-                                'HasObjectInput' => 0 
-                            ) , 
-                            'from_page' => '/content/edit/' . $object->attribute( 'id' ) . '/' . $editVersion . '/' . $editLanguage . '' 
-                        );
-                        
-                        return eZContentBrowse::browse( $browseParameters, $module );
+                        $ignoreNodesSelect = $http->postVariable( 'ignoreNodesSelect' );
                     }
+                    if( $http->hasPostVariable( 'ignoreNodesSelectSubtree' ) )
+                    {
+                        $ignoreNodesSelectSubtree = $http->postVariable( 'ignoreNodesSelectSubtree' );
+                    }
+                    $ignoreNodesSelect = array_unique( $ignoreNodesSelect );
+                    $ignoreNodesSelectSubtree = array_unique( $ignoreNodesSelectSubtree );
+                    $ignoreNodesClick = $ignoreNodesSelectSubtree;
+                    $http->removeSessionVariable( 'BrowseParameters' );
+                    $browseParameters = array( 
+                        'action_name' => 'AddNodeToMove', 
+                        'browse_custom_action' => array( 
+                            'name' => 'CustomActionButton[' . $object->attribute( 'id' ) . '_set_related_node]' , 
+                            'value' => $object->attribute( 'id' ) 
+                        ),
+                        'ignore_nodes_select' => $ignoreNodesSelect,
+                        'ignore_nodes_select_subtree' => $ignoreNodesSelectSubtree,
+                        'ignore_nodes_click' => $ignoreNodesClick,
+                        'custom_action_data' => $row,
+                        'persistent_data' => array( 
+                            'HasObjectInput' => 0 
+                        ), 
+                        'from_page' => '/content/edit/' . $object->attribute( 'id' ) . '/' . $editVersion . '/' . $editLanguage . '' 
+                    );
+                    return eZContentBrowse::browse( $browseParameters, $module );
                 }
             }
+        }
+        if( $http->hasPostVariable( 'workflow-' . $action . '-id' ) )
+        {
+            $id = ( ! is_array( $http->postVariable( 'workflow-' . $action . '-id' ) ) ) ? array( 
+                    'eZNode_' . $http->postVariable( 'workflow-' . $action . '-id' ) 
+                    ) : $http->postVariable( 'workflow-' . $action . '-id' );
             $row['action'] = serialize( array( 
-                'action' => $action , 
+                'action' => $action, 
                 'ID' => array( 
                     $action => $id 
                 ) 
             ) );
         }
-        $obj = new xrowworkflow( $row );
-        $obj->store();
+        else
+        {
+            $row['action'] = serialize( array( 'action' => $action ) );
+        }
+        // save only if action is set (offline, move, delete) or online date is not empty
+        if( ( $action != '' && $end ) || $start )
+        {
+            $obj = new xrowworkflow( $row );
+            $obj->store();
+        }
+        $http->removeSessionVariable( 'BrowseParameters' );
     }
 
     function publish( $contentObjectID, $version )
@@ -138,7 +171,6 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         {
             $workflow->check();
         }
-    
     }
 
     /*
@@ -151,7 +183,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
             return false;
         }
         $date = new DateTime( $args['date'] );
-        $date->setTime( $args['hour'], $args['minute'] ); #
+        $date->setTime( $args['hour'], $args['minute'] );
         return $date;
     }
 }
