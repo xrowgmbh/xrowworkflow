@@ -115,9 +115,6 @@ class xrowworkflow extends eZPersistentObject
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::ONLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
-
-#        $this->setAttribute( 'start', 0 );
-#        $this->store();
         $this->remove();
         eZContentCacheManager::clearContentCache( $this->contentobject_id );
         eZDebug::writeDebug( __METHOD__ );
@@ -181,6 +178,9 @@ class xrowworkflow extends eZPersistentObject
             eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
             eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
         }
+        self::updateObjectState( $this->contentobject_id, array( 
+            eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
+        ) );
         eZDebug::writeDebug( __METHOD__ );
         $this->clear( false );
         $this->remove();
@@ -191,7 +191,6 @@ class xrowworkflow extends eZPersistentObject
         $actionList = $this->attribute( 'get_action_list' );
         $deleteIDs = $actionList['ID']['delete'];
         $deleted = false;
-
         foreach ( $deleteIDs as $index => $id )
         {
             if ( $deleted === false )
