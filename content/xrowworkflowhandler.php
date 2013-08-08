@@ -42,13 +42,13 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                 'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Workflow: select an expiry date in the future.' ) 
             );
         }
-        /*if ( $end && $end < $start )
+        if ( $end && $end < $start )
         {
             $result['is_valid'] = false;
             $result['warnings'][] = array( 
                 'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Workflow: select an expiry date newer then the publication date.' ) 
             );
-        }*/
+        }
         return $result;
     }
 
@@ -80,7 +80,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         {
             $row['end'] = $end->getTimestamp();
         }
-        elseif ( $start )
+        if ( $start )
         {
             $row['start'] = $start->getTimestamp();
         }
@@ -136,12 +136,12 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                 ) 
             ) );
         }
-        else
-        {
-            $row['action'] = serialize( array( 'action' => $action ) );
-        }
         // save only if action is set (offline, move, delete) or online date is not empty
-        if( ( $action != '' && $end ) || $start )
+        if ( ( $start && $start < $now ) || ( $end && $end < $now ) || ( $end && $end < $start ) )
+        {
+            eZDebug::writeDebug( 'no workflow saved', __METHOD__ );
+        }
+        elseif( ( $action != '' && $end ) || $start )
         {
             $obj = new xrowworkflow( $row );
             $obj->store();
