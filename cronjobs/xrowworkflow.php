@@ -7,12 +7,6 @@ $user->loginCurrent();
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
 $nodeID = 2;
 
-if ( ! $isQuiet )
-{
-    $cli->output( 'Expire content of START node.' );
-    $cli->output();
-}
-
 $params = array( 
     'Limitation' => array(),
     'IgnoreVisibility' => true,
@@ -25,6 +19,11 @@ $params = array(
 $nodeArrayCount = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
 if ( $nodeArrayCount > 0 )
 {
+    if ( ! $isQuiet )
+    {
+        $cli->output( 'Expire content of START node.' );
+        $cli->output();
+    }
     if ( ! $isQuiet )
     {
         $cli->output( "Do END-xrowworkflow for " . $nodeArrayCount . " node(s)." );
@@ -83,12 +82,6 @@ if ( $nodeArrayCount > 0 )
     while ( is_array( $nodeArray ) and count( $nodeArray ) > 0 );
 }
 
-if ( ! $isQuiet )
-{
-    $cli->output( 'Publishing content of node START.' );
-    $cli->output();
-}
-
 $params = array( 
     'Limitation' => array(),
     'IgnoreVisibility' => true,
@@ -100,6 +93,12 @@ $params = array(
 $nodeArrayCount = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
 if ( $nodeArrayCount > 0 )
 {
+    if ( ! $isQuiet )
+    {
+        $cli->output( 'Publishing content of node START.' );
+        $cli->output();
+    }
+
     if ( ! $isQuiet )
     {
         $cli->output( "Publishing {$nodeArrayCount} node(s)." );
