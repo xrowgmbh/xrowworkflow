@@ -115,7 +115,15 @@ class xrowworkflow extends eZPersistentObject
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::ONLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
-        $this->remove();
+        if( $this->attribute( 'end' ) !== NULL && $this->attribute( 'end' ) > 0 )
+        {
+            $this->setAttribute( 'start', 0 );
+            $this->store();
+        }
+        else
+        {
+            $this->remove();
+        }
         eZContentCacheManager::clearContentCache( $this->contentobject_id );
         eZDebug::writeDebug( __METHOD__ );
     }
