@@ -186,8 +186,8 @@ class xrowworkflow extends eZPersistentObject
         eZDebug::writeDebug( "Move $mainNodeID to $moveToID[1]", __METHOD__ );
         if( count( $deleteIDArray ) > 0 )
         {
-            eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
             eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+            eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
         }
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
@@ -251,29 +251,29 @@ class xrowworkflow extends eZPersistentObject
                 }
             }
         }
-        if( $eZObject )
+        if( count( $deleteIDArray ) > 0 )
         {
-            if ( eZOperationHandler::operationIsAvailable( 'content_delete' ) )
+            if( $eZObject )
             {
-                $operationResult = eZOperationHandler::execute( 'content',
+                if ( eZOperationHandler::operationIsAvailable( 'content_delete' ) )
+                {
+                    $operationResult = eZOperationHandler::execute( 'content',
                                                                 'delete',
                                                                 array( 'node_id_list' => $deleteIDArray,
                                                                        'move_to_trash' => false ),
                                                                 null, true );
+                }
+                else
+                {
+                    eZDebug::writeDebug( "Delete action: remove Object and NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+                    eZContentOperationCollection::deleteObject( $deleteIDArray, false );
+                }
+                $this->clear();
             }
             else
             {
-                eZContentOperationCollection::deleteObject( $deleteIDArray, false );
-                eZDebug::writeDebug( "Delete action: remove Object and NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
-            }
-            $this->clear();
-        }
-        else
-        {
-            if( count( $deleteIDArray ) > 0 )
-            {
-                eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
                 eZDebug::writeDebug( "Delete action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+                eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
             }
         }
         eZDebug::writeDebug( __METHOD__ );
