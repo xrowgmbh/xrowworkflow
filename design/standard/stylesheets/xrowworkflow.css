@@ -1,22 +1,17 @@
-#workflow-end.left
-{
+#workflow-end.left {
     width:20%;
     float: left;
 }
-
-#workflow-action.right
-{
+#workflow-action.right {
     width: auto;
     float: left;
 }
-
-#workflow-action label
-{
-    width: 50px;
+.workflow-action-div {
+    clear: both;
+}
+#workflow-action label {
     float: left;
 }
-
-#workflow-action select
-{
+#workflow-action select {
     margin-top: 10px;
 }
