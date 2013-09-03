@@ -38,11 +38,7 @@
         <translation>offline und verschieben nach</translation>
     </message>
     <message>
-        <source>delete/source>
-        <translation>löschen</translation>
-    </message>
-    <message>
-        <source>delete/source>
+        <source>delete</source>
         <translation>löschen</translation>
     </message>
     <message>
@@ -50,3 +46,4 @@
         <translation>Fehler: Sie können einen Knoten nicht in sich selber verschieben.</translation>
     </message>
 </context>
+</TS>

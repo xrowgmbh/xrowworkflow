@@ -84,21 +84,27 @@
         </select>
     </div>
     <div id="workflow-action" class="right">
-        <div>
-            <label for="workflow-action-offline">{'offline'|i18n( 'extension/xrowworkflow' )}</label>
-            <input type="radio" id="workflow-action-offline" name="workflow-action" value="offline"{if or($workflowdata.get_action_list.action|eq( 'offline' ), $workflowdata.get_action_list.action|eq( '' ))} checked="checked"{/if} />
+        <div class="workflow-action-div">
+            <label for="workflow-action-offline">
+                <input type="radio" id="workflow-action-offline" name="workflow-action" value="offline"{if or($workflowdata.get_action_list.action|eq( 'offline' ), $workflowdata.get_action_list.action|eq( '' ))} checked="checked"{/if} />
+                {'offline'|i18n( 'extension/xrowworkflow' )}
+            </label>
         </div>
         {* MOVE *}
-        <div>
-            <label for="workflow-action-move">{'move to'|i18n( 'extension/xrowworkflow' )}</label>
-            <input type="radio" id="workflow-action-move" name="workflow-action" value="move" {if or( $workflowdata.get_action_list.action|eq( 'move' ), ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' ) )}checked="checked"{/if} />
+        <div class="workflow-action-div">
+            <label for="workflow-action-move">
+                <input type="radio" id="workflow-action-move" name="workflow-action" value="move" {if or( $workflowdata.get_action_list.action|eq( 'move' ), ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' ) )}checked="checked"{/if} />
+                {'move to'|i18n( 'extension/xrowworkflow' )}
+            </label>
             <input type="text" id="workflow-move-id" name="workflow-move-id" value="{$moveValue}"/>
             <input class="button workflow-action-move" type="submit" name="CustomActionButton[{$attribute.object.id}_browse_related_node]" value="{'Browse for node'|i18n( 'extension/xrowworkflow' )}" />
         </div>
         {* DELETE *}
-        <div>
-            <label for="workflow-action-delete">{'delete'|i18n( 'extension/xrowworkflow' )}</label>
-            <input type="radio" id="workflow-action-delete" style="position: relative; top: -55px" name="workflow-action" value="delete" {if $workflowdata.get_action_list.action|eq( 'delete' )}checked="checked"{/if} />
+        <div class="workflow-action-div">
+            <label for="workflow-action-delete">
+                <input type="radio" id="workflow-action-delete" name="workflow-action" value="delete" {if $workflowdata.get_action_list.action|eq( 'delete' )}checked="checked"{/if} />
+                {'delete'|i18n( 'extension/xrowworkflow' )}
+            </label>
             <select name="workflow-delete-id[]" id="workflow-delete-ids" multiple="multiple">
                 <option value="eZObject_{$attribute.contentobject_id}"{if $nochildren|not()} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZObject_',$attribute.contentobject_id))}selected="selected"{/if}>{'Object'|i18n( 'extension/xrowworkflow' )}: {$attribute.object.main_node.url_alias|wash}</option>
                 {* main node only enabled if no children or there are more assigned_nodes *}
