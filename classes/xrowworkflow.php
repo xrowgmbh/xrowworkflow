@@ -110,7 +110,7 @@ class xrowworkflow extends eZPersistentObject
     function online()
     {
         $object = eZContentObject::fetch( $this->contentobject_id );
-        if ( $this->attribute( 'start' ) > 0 )
+        if ( $this->attribute( 'start' ) > 0 && $object->attribute( 'class_identifier' ) != 'event' )
         {
             $object->setAttribute( 'published', $this->attribute( 'start' ) );
             $object->store();
