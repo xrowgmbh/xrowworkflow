@@ -280,13 +280,45 @@ class xrowworkflow extends eZPersistentObject
         $this->remove();
     }
 
+    function remove( $conditions = null, $extraConditions = null )
+    {
+        $def = $this->definition();
+        $keys = $def["keys"];
+        if ( !is_array( $conditions ) )
+        {
+            $conditions = array();
+            foreach ( $keys as $key )
+            {
+                $value = $this->attribute( $key );
+                $conditions[$key] = $value;
+            }
+        }
+        $db = eZDB::instance();
+        $table = $def["name"];
+        if ( is_array( $extraConditions ) )
+        {
+            foreach ( $extraConditions as $key => $cond )
+            {
+                $conditions[$key] = $cond;
+            }
+        }
+        $fields = $def['fields'];
+        eZPersistentObject::replaceFieldsWithShortNames( $db, $fields, $conditions );
+        $cond_text = eZPersistentObject::conditionText( $conditions );
+        $db->begin();
+        $db->query( "DELETE FROM $table $cond_text" );
+        $db->commit();
+    }
+
     function clear( $removeEZFlowBlocks = true )
     {
         $db = eZDB::instance();
         // Remove from the flow
         if ( $removeEZFlowBlocks && $this->contentobject_id > 0 )
         {
+            $db->begin();
             $db->query( 'DELETE FROM ezm_pool WHERE object_id = ' . (int) $this->contentobject_id );
+            $db->commit();
         }
         if( $this->contentobject_id > 0 )
         {
