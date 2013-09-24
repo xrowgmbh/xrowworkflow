@@ -5,7 +5,7 @@ $user = eZUser::fetch( eZINI::instance()->variable( 'UserSettings', 'UserCreator
 $user->loginCurrent();
 
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
-$nodeID = 2;
+$nodeID = 1;
 
 $params = array( 
     'Limitation' => array(),
