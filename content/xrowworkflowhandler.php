@@ -49,6 +49,13 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                 'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Workflow: select an expiry date newer then the publication date.' ) 
             );
         }
+        if( $end && $action == 'move' && $http->hasPostVariable( 'workflow-move-id' ) && $http->postVariable( 'workflow-move-id' ) == '' && !$http->hasPostVariable( 'CustomActionButton' ) )
+        {
+            $result['is_valid'] = false;
+            $result['warnings'][] = array( 
+                'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Workflow: select a location for move.' ) 
+            );
+        }
         return $result;
     }
 

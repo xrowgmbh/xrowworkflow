@@ -10,6 +10,10 @@
         <translation>Workflow: wählen Sie ein Ablaufdatum, welches in der Zukunft liegt.</translation>
     </message>
     <message>
+        <source>Workflow: select a location for move.</source>
+        <translation>Workflow: wählen Sie einen Ort zum Verschieben.</translation>
+    </message>
+    <message>
         <source>Workflow</source>
         <translation>Workflow</translation>
     </message>
