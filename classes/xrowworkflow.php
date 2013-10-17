@@ -193,7 +193,7 @@ class xrowworkflow extends eZPersistentObject
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
         eZDebug::writeDebug( __METHOD__ );
-        $this->clear( false );
+        $this->clear();
         $this->remove();
     }
 
