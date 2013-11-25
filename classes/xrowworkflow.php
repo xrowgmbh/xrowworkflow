@@ -145,6 +145,7 @@ class xrowworkflow extends eZPersistentObject
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
+        $this->releaseRelations();
         $this->clear();
         $this->remove();
         eZDebug::writeDebug( __METHOD__ );
@@ -335,5 +336,102 @@ class xrowworkflow extends eZPersistentObject
             }
         }
         eZContentCacheManager::clearContentCache( $this->contentobject_id );
+    }
+    
+    function releaseRelations()
+    {
+        $obj = eZContentObject::fetch( $this->contentobject_id );
+        
+        /*** clearing the gis relations ***/
+        $relations_attribute = eZFunctionHandler::execute( 'content', 'reverse_related_objects', array( 'object_id' => $this->contentobject_id,
+                                                                                                        'all_relations' => array( "attribute" )
+                                               ) );
+
+        foreach ( $relations_attribute as $relation )
+        {
+            $data_map = $relation->dataMap();
+            if ( isset( $data_map["xrowgis"] ) AND $data_map["xrowgis"]->hasContent() AND $data_map["xrowgis"]->DataInt == $this->contentobject_id AND $data_map["xrowgis"]->SortKeyInt == $this->contentobject_id )
+            {
+                //removing the relation by cleaning the values
+                $data_map["xrowgis"]->setAttribute( 'data_int', NULL );
+                $data_map["xrowgis"]->setAttribute( 'sort_key_int', 0 );
+                $data_map["xrowgis"]->store();
+                $relation->store();
+                //relation cleanup?
+            }
+            
+        }
+        
+        /*** removing the related embeds ***/
+        $relations_embed = eZFunctionHandler::execute( 'content', 'reverse_related_objects', array( 'object_id' => $this->contentobject_id,
+                                                                                                    'all_relations' => array( "xml_embed" )
+                                               ) );
+
+        foreach ( $relations_embed as $relation )
+        {
+            $data_map = $relation->dataMap();
+            foreach ( $data_map as $data_map_item )
+            {
+                if ( $data_map_item->DataTypeString == "ezxmltext" )
+                {
+                    $dom = new DOMDocument;
+                    $dom->loadXML($data_map_item->DataText);
+                    $xpath = new DOMXpath($dom);
+                    //find all embed elements with the correct object_id
+                    foreach ( $xpath->query("*/embed[@object_id='" . $obj->ID . "']") as $element )
+                    {
+                        $element->parentNode->removeChild($element);
+                    }
+                    
+                    $data_map_item->setAttribute( 'data_text', $dom->saveXML() );
+                    $data_map_item->store();
+                }
+
+            }
+            //from -> to
+            $relation->removeContentObjectRelation( $obj->ID, false, 0, 2 );
+        }
+
+        /*** removing the related links ***/
+        $relations_link = eZFunctionHandler::execute( 'content', 'reverse_related_objects', array( 'object_id' => $this->contentobject_id,
+                                                                                                   'all_relations' => array( "xml_link" )
+                                               ) );
+
+        foreach ( $relations_link as $relation )
+        {
+            $data_map = $relation->dataMap();
+            foreach ( $data_map as $data_map_item )
+            {
+                if ( $data_map_item->DataTypeString == "ezxmltext" )
+                {
+                    $dom = new DOMDocument;
+                    $dom->loadXML($data_map_item->DataText);
+                    $xpath = new DOMXpath($dom);
+                    //find all link elements with the correct linked object_id to remove
+                    foreach ( $xpath->query("*/link[@object_id='" . $obj->ID . "']") as $element )
+                    {
+                        $text_element = $dom->createTextNode($element->nodeValue);
+                        $element->parentNode->replaceChild($text_element, $element);
+                    }
+
+                    //removing linked nodes
+                    foreach ( $obj->assignedNodes() as $node)
+                    {
+                        foreach ( $xpath->query("*/link[@node_id='" . $node->NodeID . "']") as $element )
+                        {
+                            $text_element = $dom->createTextNode($element->nodeValue);
+                            $element->parentNode->replaceChild($text_element, $element);
+                        }
+                    }
+
+                    $data_map_item->setAttribute( 'data_text', $dom->saveXML() );
+                    $data_map_item->store();
+
+                    //release relation in database
+                    $relation->removeContentObjectRelation( $obj->ID, false, 0, 4 );
+                }
+            }
+        }
+
     }
 }
