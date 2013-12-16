@@ -193,9 +193,11 @@ class xrowworkflow extends eZPersistentObject
         self::updateObjectState( $this->contentobject_id, array( 
             eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
         ) );
-        eZDebug::writeDebug( __METHOD__ );
+        
+        $this->releaseRelations();
         $this->clear();
         $this->remove();
+        eZDebug::writeDebug( __METHOD__ );
     }
 
     function delete()
@@ -341,7 +343,7 @@ class xrowworkflow extends eZPersistentObject
     function releaseRelations()
     {
         $obj = eZContentObject::fetch( $this->contentobject_id );
-        
+
         /*** clearing the gis relations ***/
         $relations_attribute = eZFunctionHandler::execute( 'content', 'reverse_related_objects', array( 'object_id' => $this->contentobject_id,
                                                                                                         'all_relations' => array( "attribute" )
@@ -350,18 +352,44 @@ class xrowworkflow extends eZPersistentObject
         foreach ( $relations_attribute as $relation )
         {
             $data_map = $relation->dataMap();
-            if ( isset( $data_map["xrowgis"] ) AND $data_map["xrowgis"]->hasContent() AND $data_map["xrowgis"]->DataInt == $this->contentobject_id AND $data_map["xrowgis"]->SortKeyInt == $this->contentobject_id )
+            foreach ( $data_map as $key => $attribute)
             {
-                //removing the relation by cleaning the values
-                $data_map["xrowgis"]->setAttribute( 'data_int', NULL );
-                $data_map["xrowgis"]->setAttribute( 'sort_key_int', 0 );
-                $data_map["xrowgis"]->store();
-                $relation->store();
-                //relation cleanup?
+                if ( $attribute->DataTypeString === "xrowgis" AND $attribute->hasContent() AND $attribute->DataInt == $this->contentobject_id AND $attribute->SortKeyInt == $this->contentobject_id )
+                {
+                    //removing the xrowgisrelation by cleaning the values
+                    $data_map["xrowgis"]->setAttribute( 'data_int', NULL );
+                    $data_map["xrowgis"]->setAttribute( 'sort_key_int', 0 );
+                    $data_map["xrowgis"]->store();
+                    $relation->store();
+                    //relation cleanup?
+                }
+                elseif ( $attribute->DataTypeString === "ezobjectrelationlist" AND $attribute->hasContent() )
+                {
+                    //ezobjectrelationlist cleanup
+                    $datatype = $attribute->dataType();
+                    $datatype->removeRelatedObjectItem( $attribute, $this->contentobject_id );
+                    eZContentCacheManager::clearObjectViewCache( $attribute->attribute( 'contentobject_id' ), true );
+                    $attribute->storeData();
+                    $datatype->removeRelationObject( $attribute, (array)$obj );
+                    $attribute->store();
+                    $relation->store();
+                }
+                elseif ( $attribute->DataTypeString === "ezobjectrelation" AND $attribute->hasContent() )
+                {
+                    //ezobjectrelation cleanup
+                    $datatype = $attribute->dataType();
+                    $datatype->removeRelatedObjectItem( $attribute, $this->contentobject_id );
+                    eZContentCacheManager::clearObjectViewCache( $attribute->attribute( 'contentobject_id' ), true );
+                    $attribute->storeData();
+                    $datatype->removeContentObjectRelation( $attribute );
+                    $attribute->store();
+                    $relation->store();
+                    //$relation->removeContentObjectRelation( $obj->ID, false, 0, 8 );
+                }
             }
-            
-        }
         
+        }
+
         /*** removing the related embeds ***/
         $relations_embed = eZFunctionHandler::execute( 'content', 'reverse_related_objects', array( 'object_id' => $this->contentobject_id,
                                                                                                     'all_relations' => array( "xml_embed" )
