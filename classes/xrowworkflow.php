@@ -406,7 +406,7 @@ class xrowworkflow extends eZPersistentObject
                     $dom->loadXML($data_map_item->DataText);
                     $xpath = new DOMXpath($dom);
                     //find all embed elements with the correct object_id
-                    foreach ( $xpath->query("*/embed[@object_id='" . $obj->ID . "']") as $element )
+                    foreach ( $xpath->query("*//embed[@object_id='" . $obj->ID . "']") as $element )
                     {
                         $element->parentNode->removeChild($element);
                     }
@@ -436,7 +436,7 @@ class xrowworkflow extends eZPersistentObject
                     $dom->loadXML($data_map_item->DataText);
                     $xpath = new DOMXpath($dom);
                     //find all link elements with the correct linked object_id to remove
-                    foreach ( $xpath->query("*/link[@object_id='" . $obj->ID . "']") as $element )
+                    foreach ( $xpath->query("*//link[@object_id='" . $obj->ID . "']") as $element )
                     {
                         $text_element = $dom->createTextNode($element->nodeValue);
                         $element->parentNode->replaceChild($text_element, $element);
@@ -445,7 +445,7 @@ class xrowworkflow extends eZPersistentObject
                     //removing linked nodes
                     foreach ( $obj->assignedNodes() as $node)
                     {
-                        foreach ( $xpath->query("*/link[@node_id='" . $node->NodeID . "']") as $element )
+                        foreach ( $xpath->query("*//link[@node_id='" . $node->NodeID . "']") as $element )
                         {
                             $text_element = $dom->createTextNode($element->nodeValue);
                             $element->parentNode->replaceChild($text_element, $element);
