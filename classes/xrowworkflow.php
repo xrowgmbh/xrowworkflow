@@ -443,7 +443,7 @@ class xrowworkflow extends eZPersistentObject
 
     }
     
-	/* P1: Contentobject ID from offline Image P2: The related Object where it will be removed of*/
+    /* P1: Contentobject ID from offline Image P2: The related Object where it will be removed of*/
     function myOwnremoveReverseRelations( $contentobject_id, $relation )
     {
         $db = eZDB::instance();
