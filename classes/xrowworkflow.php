@@ -348,7 +348,6 @@ class xrowworkflow extends eZPersistentObject
         $relations_attribute = eZFunctionHandler::execute( 'content', 'reverse_related_objects', array( 'object_id' => $this->contentobject_id,
                                                                                                         'all_relations' => array( "attribute" )
                                                ) );
-
         foreach ( $relations_attribute as $relation )
         {
             $data_map = $relation->dataMap();
@@ -363,28 +362,9 @@ class xrowworkflow extends eZPersistentObject
                     $relation->store();
                     //relation cleanup?
                 }
-                elseif ( $attribute->DataTypeString === "ezobjectrelationlist" AND $attribute->hasContent() )
+                elseif ( ( $attribute->DataTypeString === "ezobjectrelation" OR $attribute->DataTypeString === "ezobjectrelationlist") AND $attribute->hasContent() )
                 {
-                    //ezobjectrelationlist cleanup
-                    $datatype = $attribute->dataType();
-                    $datatype->removeRelatedObjectItem( $attribute, $this->contentobject_id );
-                    eZContentCacheManager::clearObjectViewCache( $attribute->attribute( 'contentobject_id' ), true );
-                    $attribute->storeData();
-                    $datatype->removeRelationObject( $attribute, (array)$obj );
-                    $attribute->store();
-                    $relation->store();
-                }
-                elseif ( $attribute->DataTypeString === "ezobjectrelation" AND $attribute->hasContent() )
-                {
-                    //ezobjectrelation cleanup
-                    $datatype = $attribute->dataType();
-                    $datatype->removeRelatedObjectItem( $attribute, $this->contentobject_id );
-                    eZContentCacheManager::clearObjectViewCache( $attribute->attribute( 'contentobject_id' ), true );
-                    $attribute->storeData();
-                    $datatype->removeContentObjectRelation( $attribute );
-                    $attribute->store();
-                    $relation->store();
-                    //$relation->removeContentObjectRelation( $obj->ID, false, 0, 8 );
+                    $this->myOwnremoveReverseRelations( $this->contentobject_id, $relation );
                 }
             }
         
@@ -461,5 +441,34 @@ class xrowworkflow extends eZPersistentObject
             }
         }
 
+    }
+    
+	/* P1: Contentobject ID from offline Image P2: The related Object where it will be removed of*/
+    function myOwnremoveReverseRelations( $contentobject_id, $relation )
+    {
+        $db = eZDB::instance();
+        $result = $db->arrayQuery( "SELECT attr.*
+                        FROM ezcontentobject_link link,
+                             ezcontentobject_attribute attr
+                        WHERE link.from_contentobject_id=attr.contentobject_id AND
+                              link.from_contentobject_version=attr.version AND
+                              link.contentclassattribute_id=attr.contentclassattribute_id AND
+                              link.to_contentobject_id=$contentobject_id" );
+
+        // Remove references from XML.
+        if ( count( $result ) > 0 )
+        {
+            foreach( $result as $row )
+            {
+                $attr = new eZContentObjectAttribute( $row );
+                $dataType = $attr->dataType();
+                //removes the item from list
+                $dataType->removeRelatedObjectItem( $attr, $contentobject_id );
+                eZContentCacheManager::clearObjectViewCache( $attr->attribute( 'contentobject_id' ), true );
+                $attr->storeData();
+                //removes the db connection in ezcontentobject_link
+                $relation->removeContentObjectRelation( $contentobject_id, false, $attr->attribute("contentclassattribute_id") );
+            }
+        }
     }
 }
