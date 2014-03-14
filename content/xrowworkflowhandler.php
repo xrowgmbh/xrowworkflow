@@ -143,6 +143,11 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                 ) 
             ) );
         }
+        else
+        {
+            $row['action'] = serialize( array( 'action' => $action ) );
+        }
+
         // save only if action is set (offline, move, delete) or online date is not empty
         if ( ( $start && $start < $now ) || ( $end && $end < $now ) || ( $end && $end < $start ) )
         {

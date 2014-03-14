@@ -93,7 +93,7 @@
         {* MOVE *}
         <div class="workflow-action-div">
             <label for="workflow-action-move">
-                <input type="radio" id="workflow-action-move" name="workflow-action" value="move" {if or( $workflowdata.get_action_list.action|eq( 'move' ), ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' ) )}checked="checked"{/if} />
+                <input type="radio" id="workflow-action-move" name="workflow-action" value="move"{if or( $workflowdata.get_action_list.action|eq( 'move' ), ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' ) )} checked="checked"{/if} />
                 {'move to'|i18n( 'extension/xrowworkflow' )}
             </label>
             <input type="text" id="workflow-move-id" name="workflow-move-id" value="{$moveValue}"/>
@@ -102,7 +102,7 @@
         {* DELETE *}
         <div class="workflow-action-div">
             <label for="workflow-action-delete">
-                <input type="radio" id="workflow-action-delete" name="workflow-action" value="delete" {if $workflowdata.get_action_list.action|eq( 'delete' )}checked="checked"{/if} />
+                <input type="radio" id="workflow-action-delete" name="workflow-action" value="delete"{if $workflowdata.get_action_list.action|eq( 'delete' )} checked="checked"{/if} />
                 {'delete'|i18n( 'extension/xrowworkflow' )}
             </label>
             <select name="workflow-delete-id[]" id="workflow-delete-ids" multiple="multiple">
@@ -115,7 +115,7 @@
             {/foreach}
             {/if}
             </select>
-        <div>
+        </div>
     </div>
 </fieldset>
 {literal}
