@@ -157,46 +157,65 @@ class xrowworkflow extends eZPersistentObject
         $moveTo = $actionList['ID']['move'];
         $moveToArray = explode( '_', $moveTo[0] );
         $moveToNodeID = $moveToArray[1];
-        $object = eZContentObject::fetch( $this->contentobject_id );
-        $deleteIDArray = array();
-        foreach ( $object->attribute( 'assigned_nodes' ) as $node )
+        if( $moveToNodeID != '' )
         {
-            if( $node instanceof eZContentObjectTreeNode )
+            $moveToNode = eZContentObjectTreeNode::fetch( $moveToNodeID );
+            if( $moveToNode instanceof eZContentObjectTreeNode )
             {
-                if ( ! $node->attribute( 'is_main' ) )
+                $object = eZContentObject::fetch( $this->contentobject_id );
+                $deleteIDArray = array();
+                foreach ( $object->attribute( 'assigned_nodes' ) as $node )
                 {
-                    // check children
-                    $countChildren = $node->childrenCount();
-                    if( $countChildren == 0 )
+                    if( $node instanceof eZContentObjectTreeNode )
                     {
-                        $deleteIDArray[] = $node->NodeID;
+                        if ( ! $node->attribute( 'is_main' ) )
+                        {
+                            // check children
+                            $countChildren = $node->childrenCount();
+                            if( $countChildren == 0 )
+                            {
+                                $deleteIDArray[] = $node->NodeID;
+                            }
+                        }
+                        else
+                        {
+                            $mainNodeID = $node->NodeID;
+                        }
+                    }
+                    else
+                    {
+                        eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
                     }
                 }
-                else
+
+                eZContentObjectTreeNodeOperations::move( $mainNodeID, $moveToNodeID );
+                eZDebug::writeDebug( "Move $mainNodeID to $moveToID[1]", __METHOD__ );
+                if( count( $deleteIDArray ) > 0 )
                 {
-                    $mainNodeID = $node->NodeID;
+                    eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
+                    eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
                 }
+                self::updateObjectState( $this->contentobject_id, array( 
+                    eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
+                ) );
+
+                $this->releaseRelations();
+                $this->clear();
+                $this->remove();
             }
             else
             {
-                eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
+                $this->offline();
+                eZDebug::writeError( "Can't move $this->contentobject_id to $moveToNodeID. $moveToNodeID does not exist. Set it offline.", __METHOD__ );
+                self::sendErrorMail( "Can't move $this->contentobject_id to $moveToNodeID. $moveToNodeID does not exist. Set it offline." );
             }
         }
-
-        eZContentObjectTreeNodeOperations::move( $mainNodeID, $moveToNodeID );
-        eZDebug::writeDebug( "Move $mainNodeID to $moveToID[1]", __METHOD__ );
-        if( count( $deleteIDArray ) > 0 )
+        else
         {
-            eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
-            eZContentObjectTreeNode::removeSubtrees( $deleteIDArray, false );
+            $this->offline();
+            eZDebug::writeError( "Can't move $this->contentobject_id to empty NodeID. Set it offline.", __METHOD__ );
+            self::sendErrorMail( "Can't move $this->contentobject_id to empty NodeID. Set it offline." );
         }
-        self::updateObjectState( $this->contentobject_id, array( 
-            eZContentObjectState::fetchByIdentifier( xrowworkflow::OFFLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
-        ) );
-        
-        $this->releaseRelations();
-        $this->clear();
-        $this->remove();
         eZDebug::writeDebug( __METHOD__ );
     }
 
@@ -468,6 +487,34 @@ class xrowworkflow extends eZPersistentObject
                 $attr->storeData();
                 //removes the db connection in ezcontentobject_link
                 $relation->removeContentObjectRelation( $contentobject_id, false, $attr->attribute("contentclassattribute_id") );
+            }
+        }
+    }
+
+    static function sendErrorMail( $mail_errorstring )
+    {
+        $ini = eZINI::instance( 'site.ini' );
+        $xrowworkflow_ini = eZINI::instance( 'xrowworkflow.ini' );
+        if( $xrowworkflow_ini->hasVariable( 'Settings', 'ReceiverArray' ) && count( $xrowworkflow_ini->variable( 'Settings', 'ReceiverArray' ) ) > 0 )
+        {
+            ezcMailTools::setLineBreak( "\n" );
+            $mail = new ezcMailComposer();
+            $mail->charset = 'utf-8';
+            $mail->from = new ezcMailAddress( $ini->variable( 'MailSettings', 'EmailSender' ), $ini->variable( 'SiteSettings', 'SiteName' ), $mail->charset );
+            $mail->returnPath = $mail->from;
+            $mail->subject = 'xrowworkflow error during move action';
+            $mail->plainText = $mail_errorstring;
+            $mail->build();
+    
+            $receiverArray = $xrowworkflow_ini->variable( 'Settings', 'ReceiverArray' );
+            $transport = new ezcMailMtaTransport();
+            foreach ( $receiverArray as $receiver )
+            {
+                $mail->addTo( new ezcMailAddress( $receiver, '', $mail->charset ) );
+            }
+            if( !$transport->send( $mail ) )
+            {
+                eZDebug::writeError( "Can't send error mail after not moving a node (xrowworkflow).", __METHOD__ );
             }
         }
     }
