@@ -18,6 +18,10 @@
         <translation>Workflow</translation>
     </message>
     <message>
+        <source>Workflow: the selected move location is not valid.</source>
+        <translation>Workflow: der gewählte Ort zum Verschieben ist nicht gültig.</translation>
+    </message>
+    <message>
         <source>Date of publication</source>
         <translation>Veröffentlichungsdatum</translation>
     </message>
