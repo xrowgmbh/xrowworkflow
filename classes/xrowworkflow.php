@@ -374,6 +374,9 @@ class xrowworkflow extends eZPersistentObject
             {
                 if ( $attribute->DataTypeString === "xrowgis" AND $attribute->hasContent() AND $attribute->DataInt == $this->contentobject_id AND $attribute->SortKeyInt == $this->contentobject_id )
                 {
+                    //clear cache
+                    eZContentCacheManager::clearObjectViewCache( $relation->ID );
+
                     //removing the xrowgisrelation by cleaning the values
                     $data_map["xrowgis"]->setAttribute( 'data_int', NULL );
                     $data_map["xrowgis"]->setAttribute( 'sort_key_int', 0 );
@@ -415,6 +418,10 @@ class xrowworkflow extends eZPersistentObject
                 }
 
             }
+
+            //clear cache
+            eZContentCacheManager::clearObjectViewCache( $relation->ID );
+
             //from -> to
             $relation->removeContentObjectRelation( $obj->ID, false, 0, 2 );
         }
@@ -451,6 +458,10 @@ class xrowworkflow extends eZPersistentObject
                         }
                     }
 
+                    //clear cache
+                    eZContentCacheManager::clearObjectViewCache( $relation->ID );
+
+                    //store object
                     $data_map_item->setAttribute( 'data_text', $dom->saveXML() );
                     $data_map_item->store();
 
@@ -483,7 +494,7 @@ class xrowworkflow extends eZPersistentObject
                 $dataType = $attr->dataType();
                 //removes the item from list
                 $dataType->removeRelatedObjectItem( $attr, $contentobject_id );
-                eZContentCacheManager::clearObjectViewCache( $attr->attribute( 'contentobject_id' ), true );
+                eZContentCacheManager::clearObjectViewCache( $attr->attribute( 'contentobject_id' ));
                 $attr->storeData();
                 //removes the db connection in ezcontentobject_link
                 $relation->removeContentObjectRelation( $contentobject_id, false, $attr->attribute("contentclassattribute_id") );
