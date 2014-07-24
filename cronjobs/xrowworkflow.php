@@ -129,7 +129,6 @@ if ( $nodeArrayCount > 0 )
                 {
                     eZDebug::writeError( array( $node, " is not instanceof eZContentObjectTreeNode" ), __METHOD__ );
                 }
-                echo ".";
             }
             $params["Offset"] = $params["Offset"] + count( $nodeArray );
             eZContentObject::clearCache();
