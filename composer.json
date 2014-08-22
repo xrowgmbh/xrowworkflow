@@ -1,5 +1,5 @@
 {
-    "name": "xrowgmbh/xrowworkflow-ls",
+    "name": "xrow/xrowworkflow-ls",
     "description": "A common standard editorial publishing workflow for eZ Publish.",
     "type": "ezpublish-legacy-extension",
     "license": "GPL-2.0",
