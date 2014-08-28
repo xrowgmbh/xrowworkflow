@@ -7,9 +7,6 @@ Installation
    online/Online
    offline/Offline
    queue/Online Warteschlange
-* Create State Group "workflow_approval" / Freigabe
-   confirmed/Abgesegnet
-   handling/Bearbeitung
-   approval/Freigabe
+* Configure permissions for anonymous user to have only access (ontent/read) to items with state "online"
 * Configure cron
 * Clear cache
