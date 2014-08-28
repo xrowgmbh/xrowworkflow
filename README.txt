@@ -6,7 +6,7 @@ Installation
  * Create States
    online/Online
    offline/Offline
-   queue/Online Queue
+   queue/Online Warteschlange
 * Create State Group "workflow_approval" / Freigabe
    confirmed/Abgesegnet
    handling/Bearbeitung
