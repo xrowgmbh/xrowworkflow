@@ -1,8 +1,23 @@
 <?php
 
-//login as admin 
+//login a admin user
 $user = eZUser::fetch( eZINI::instance()->variable( 'UserSettings', 'UserCreatorID' ) );
-$user->loginCurrent();
+
+if( $user instanceof eZUser )
+{
+    if ( $user->isEnabled() )
+    {
+        $user->loginCurrent();
+    }
+    else
+    {
+        $cli->output( "Could not login deactivated user with ID: " . eZINI::instance()->variable( 'UserSettings', 'UserCreatorID' ) );
+    }
+}
+else
+{
+    $cli->output( "Could not fetch user with ID: " . eZINI::instance()->variable( 'UserSettings', 'UserCreatorID' ) );
+}
 
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
 $nodeID = 1;
