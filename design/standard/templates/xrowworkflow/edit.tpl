@@ -102,18 +102,31 @@
         {* DELETE *}
         <div class="workflow-action-div">
             <label for="workflow-action-delete">
-                <input type="radio" id="workflow-action-delete" name="workflow-action" value="delete"{if $workflowdata.get_action_list.action|eq( 'delete' )} checked="checked"{/if} />
+                <input type="radio" id="workflow-action-delete" name="workflow-action" value="delete"{if $workflowdata.get_action_list.action|eq( 'delete' )} checked="checked"{/if}{if $nochildren|not()} disabled="disabled"{/if} />
                 {'delete'|i18n( 'extension/xrowworkflow' )}
             </label>
+
             <select name="workflow-delete-id[]" id="workflow-delete-ids" multiple="multiple">
-                <option value="eZObject_{$attribute.contentobject_id}"{if $nochildren|not()} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZObject_',$attribute.contentobject_id))}selected="selected"{/if}>{'Object'|i18n( 'extension/xrowworkflow' )}: {$attribute.object.main_node.url_alias|wash}</option>
+                <option value="eZObject_{$attribute.contentobject_id}"{if $nochildren|not()} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZObject_',$attribute.contentobject_id))}selected="selected"{/if}>
+                    {if is_set($attribute.object.main_node)}
+                        {'Object'|i18n( 'extension/xrowworkflow' )}: {$attribute.object.main_node.url_alias|wash()}
+                    {else}
+                        {'This object'|i18n( 'extension/xrowworkflow' )}
+                    {/if}
+                </option>
+                
                 {* main node only enabled if no children or there are more assigned_nodes *}
-                <option value="eZNode_{$main_node.node_id}"{if or( $main_node.children_count|gt( 0 ), $assigned_nodes|count|eq( 0 ) )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$main_node.node_id))}selected="selected"{/if}>{'Main Node'|i18n( 'extension/xrowworkflow' )}: {$main_node.url_alias|wash}</option>
-            {if $assigned_nodes|count|gt( 0 )}
-            {foreach $assigned_nodes as $anode}
-                <option value="eZNode_{$anode.node_id}"{if $anode.children_count|gt( 0 )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$anode.node_id))}selected="selected"{/if}>{'Node'|i18n( 'extension/xrowworkflow' )}: {$anode.url_alias|wash}</option>
-            {/foreach}
-            {/if}
+                {if $main_node|is_object()}
+                    <option value="eZNode_{$main_node.node_id}"{if or( $main_node.children_count|gt( 0 ), $assigned_nodes|count|eq( 0 ) )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$main_node.node_id))}selected="selected"{/if}>
+                       {'Main Node'|i18n( 'extension/xrowworkflow' )}: {$main_node.url_alias|wash()}
+                    </option>
+                {/if}
+                
+                {if $assigned_nodes|count|gt( 0 )}
+                    {foreach $assigned_nodes as $anode}
+                        <option value="eZNode_{$anode.node_id}"{if $anode.children_count|gt( 0 )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$anode.node_id))}selected="selected"{/if}>{'Node'|i18n( 'extension/xrowworkflow' )}: {$anode.url_alias|wash()}</option>
+                    {/foreach}
+                {/if}
             </select>
         </div>
     </div>

@@ -53,5 +53,17 @@
         <source>Error: you can not move a node in itself</source>
         <translation>Fehler: Sie können einen Knoten nicht in sich selber verschieben.</translation>
     </message>
+    <message>
+        <source>Object</source>
+        <translation>Objekt</translation>
+    </message>
+    <message>
+        <source>This object</source>
+        <translation>Dieses Objekt</translation>
+    </message>
+    <message>
+        <source>Main Node</source>
+        <translation>Hauptort</translation>
+    </message>
 </context>
 </TS>

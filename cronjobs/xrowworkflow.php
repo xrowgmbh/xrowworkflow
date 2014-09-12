@@ -12,11 +12,13 @@ if( $user instanceof eZUser )
     else
     {
         $cli->output( "Could not login deactivated user with ID: " . eZINI::instance()->variable( 'UserSettings', 'UserCreatorID' ) );
+        eZDebug::writeError( array( "Could not login deactivated user with ID: " . eZINI::instance()->variable( 'UserSettings', 'UserCreatorID' ) ), __METHOD__ );
     }
 }
 else
 {
     $cli->output( "Could not fetch user with ID: " . eZINI::instance()->variable( 'UserSettings', 'UserCreatorID' ) );
+    eZDebug::writeError( array( "Could not fetch user with ID: " . eZINI::instance()->variable( 'UserSettings', 'UserCreatorID' ) ), __METHOD__ );
 }
 
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
