@@ -206,15 +206,15 @@ class xrowworkflow extends eZPersistentObject
             else
             {
                 $this->offline();
-                eZDebug::writeError( "Can't move $this->contentobject_id to $moveToNodeID. $moveToNodeID does not exist. Set it offline.", __METHOD__ );
-                self::sendErrorMail( "Can't move $this->contentobject_id to $moveToNodeID. $moveToNodeID does not exist. Set it offline." );
+                eZDebug::writeError( "Can't move $this->contentobject_id  to $moveToNodeID. $moveToNodeID does not exist. Set it offline. All ID's are object ID's.", __METHOD__ );
+                self::sendErrorMail( "Can't move $this->contentobject_id to $moveToNodeID. $moveToNodeID does not exist. Set it offline. All ID's are object ID's." );
             }
         }
         else
         {
             $this->offline();
-            eZDebug::writeError( "Can't move $this->contentobject_id to empty NodeID. Set it offline.", __METHOD__ );
-            self::sendErrorMail( "Can't move $this->contentobject_id to empty NodeID. Set it offline." );
+            eZDebug::writeError( "Can't move $this->contentobject_id (object ID) to empty NodeID. Set it offline.", __METHOD__ );
+            self::sendErrorMail( "Can't move $this->contentobject_id (object ID) to empty NodeID. Set it offline." );
         }
         eZDebug::writeDebug( __METHOD__ );
     }
@@ -299,6 +299,7 @@ class xrowworkflow extends eZPersistentObject
             }
         }
         eZDebug::writeDebug( __METHOD__ );
+        self::sendErrorMail( "Can't move $this->contentobject_id to 123. 546 does not exist. Set it offline. All ID's are object ID's." );
         $this->remove();
     }
 
@@ -514,7 +515,7 @@ class xrowworkflow extends eZPersistentObject
             $mail->from = new ezcMailAddress( $ini->variable( 'MailSettings', 'EmailSender' ), $ini->variable( 'SiteSettings', 'SiteName' ), $mail->charset );
             $mail->returnPath = $mail->from;
             $mail->subject = 'xrowworkflow error during move action';
-            $mail->plainText = $mail_errorstring;
+            $mail->plainText = $mail_errorstring . " mail sent from: " . eZSys::hostname() . "(" . eZSys::serverURL() . ")";
             $mail->build();
     
             $receiverArray = $xrowworkflow_ini->variable( 'Settings', 'ReceiverArray' );
