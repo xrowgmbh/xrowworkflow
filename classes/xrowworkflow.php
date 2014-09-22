@@ -299,7 +299,6 @@ class xrowworkflow extends eZPersistentObject
             }
         }
         eZDebug::writeDebug( __METHOD__ );
-        self::sendErrorMail( "Can't move $this->contentobject_id to 123. 546 does not exist. Set it offline. All ID's are object ID's." );
         $this->remove();
     }
 
