@@ -181,18 +181,43 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
 
     function publish( $contentObjectID, $version )
     {
-        $cov = eZContentObjectVersion::fetchVersion( $version, $contentObjectID );
-        if ( $cov instanceof eZContentObjectVersion )
+        $xrowworkflow_ini = eZINI::instance( 'xrowworkflow.ini' );
+        if( $xrowworkflow_ini->hasVariable( 'Settings', 'ReplaceObjectPublishedWithField' ) )
         {
-            $co = $cov->attribute( 'contentobject' );
-            if ( $co && $co->attribute( 'class_identifier' ) == 'event' )
+            $cov = eZContentObjectVersion::fetchVersion( $version, $contentObjectID );
+            if ( $cov instanceof eZContentObjectVersion )
             {
-                $dm = $cov->dataMap();
-                if ( isset( $dm['start'] ) && $dm['start']->hasContent() )
+                $co = $cov->attribute( 'contentobject' );
+                if ( $co instanceof eZContentObject )
                 {
-                    $time = $dm['start']->attribute( 'data_int' );
-                    $co->setAttribute( 'published', $time );
-                    $co->store();
+                    $replacePublished = $xrowworkflow_ini->variable( 'Settings', 'ReplaceObjectPublishedWithField' );
+                    $class_identifier = $co->attribute( 'class_identifier' );
+                    if( isset( $replacePublished[$class_identifier] ) )
+                    {
+                        $attributeName = $replacePublished[$class_identifier];
+                        $dm = $cov->dataMap();
+                        if ( isset( $dm[$attributeName] ) && $dm[$attributeName]->hasContent() )
+                        {
+                            $function = 'toString';
+                            $contentObjectAttribute = $dm[$attributeName];
+                            if( $xrowworkflow_ini->hasGroup( 'ReplaceObjectPublished_' . $attributeName ) && $xrowworkflow_ini->hasVariable( 'ReplaceObjectPublished_' . $attributeName, 'Function' ) )
+                            {
+                                $function = $xrowworkflow_ini->variable( 'ReplaceObjectPublished_' . $attributeName, 'Function' );
+                            }
+                            switch ( $contentObjectAttribute->DataTypeString )
+                            {
+                                case 'ezpublishevent':
+                                    $content = $contentObjectAttribute->$function( $contentObjectAttribute );
+                                    $time = $content['perioddetails']['firststartdate'];
+                                    break;
+                                default:
+                                    $time = $contentObjectAttribute->$function( $contentObjectAttribute );
+                                    break;
+                            }
+                            $co->setAttribute( 'published', $time );
+                            $co->store();
+                        }
+                    }
                 }
             }
         }
