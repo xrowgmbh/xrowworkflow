@@ -39,6 +39,12 @@ class xrowworkflow extends eZPersistentObject
                     'datatype' => 'string' , 
                     'default' => null , 
                     'required' => true 
+                ) , 
+                'type' => array( 
+                    'name' => 'type' , 
+                    'datatype' => 'integer' , 
+                    'default' => 1 , 
+                    'required' => true 
                 ) 
             ) , 
             'keys' => array( 
@@ -110,7 +116,14 @@ class xrowworkflow extends eZPersistentObject
     function online()
     {
         $object = eZContentObject::fetch( $this->contentobject_id );
-        if ( $this->attribute( 'start' ) > 0 && $object->attribute( 'class_identifier' ) != 'event' )
+        $xrowworkflow_ini = eZINI::instance( 'xrowworkflow.ini' );
+        $excludeClasses = array();
+        if ( $xrowworkflow_ini->hasVariable( 'Settings', 'ExcludeClassForReplaceObjectPublishedWithWorkflowValue' ) )
+        {
+            $excludeClasses = $xrowworkflow_ini->variable( 'Settings', 'ExcludeClassForReplaceObjectPublishedWithWorkflowValue' );
+        }
+        if ( $this->attribute( 'start' ) > 0 && 
+            ( count( $excludeClasses ) == 0 || ( count( $excludeClasses ) > 0 && in_array( $object->attribute( 'class_identifier' ), $excludeClasses ) ) ) )
         {
             $object->setAttribute( 'published', $this->attribute( 'start' ) );
             $object->store();

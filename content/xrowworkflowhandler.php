@@ -59,7 +59,6 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
 
         if( $action == 'move' && $http->hasPostVariable( 'workflow-move-id' ) && $http->postVariable( 'workflow-move-id' ) != '' && !$http->hasPostVariable( 'CustomActionButton' ) )
         {
-
             $node_id = $http->postVariable( 'workflow-move-id' );
             if ( is_numeric($node_id) )
             {
@@ -82,6 +81,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         $start = false;
         $end = false;
         $action = '';
+        $type = 1;
 
         if( $http->hasPostVariable( 'workflow-action' ) )
             $action = $http->postVariable( 'workflow-action' );
@@ -104,6 +104,32 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         if( $action != '' && $end )
         {
             $row['end'] = $end->getTimestamp();
+        }
+        if( $action == 'offline' && !$end )
+        {
+            $xrowworkflow_ini = eZINI::instance( 'xrowworkflow.ini' );
+            $type = 2;
+            if( $xrowworkflow_ini->hasVariable( 'Settings', 'ReplaceObjectUnpublishedWithField' ) )
+            {
+                $replaceUnpublished = $xrowworkflow_ini->variable( 'Settings', 'ReplaceObjectUnpublishedWithField' );
+                $class_identifier = $object->attribute( 'class_identifier' );
+                if( isset( $replaceUnpublished[$class_identifier] ) )
+                {
+                    $attributeName = $replaceUnpublished[$class_identifier];
+                    if( $xrowworkflow_ini->hasGroup( 'ReplaceObjectUnpublished_' . $attributeName ) && $xrowworkflow_ini->hasVariable( 'ReplaceObjectUnpublished_' . $attributeName, 'DataTypeString' ) )
+                    {
+                        $dataTypeString = $xrowworkflow_ini->variable( 'ReplaceObjectUnpublished_' . $attributeName, 'DataTypeString' );
+                        switch ( $dataTypeString )
+                        {
+                            case 'ezpublishevent':
+                                $row['end'] = eZPublishEvent::getEndTimestamp( $object, $http );
+                                break;
+                            default:
+                                break;
+                        }
+                    }
+                }
+            }
         }
         if ( $start )
         {
@@ -165,13 +191,14 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         {
             $row['action'] = serialize( array( 'action' => $action ) );
         }
+        $row['type'] = $type;
 
         // save only if action is set (offline, move, delete) or online date is not empty
-        if ( ( $start && $start < $now ) || ( $end && $end < $now ) || ( $end && $end < $start ) )
+        if ( ( $row['start'] && $row['start'] < $now ) || ( $row['end'] && $row['end'] < $now ) || ( $row['end'] && $row['end'] < $row['start'] ) )
         {
             eZDebug::writeDebug( 'no workflow saved', __METHOD__ );
         }
-        elseif( ( $action != '' && $end ) || $start )
+        elseif( ( $action != '' && $row['end'] ) || $row['start'] )
         {
             $obj = new xrowworkflow( $row );
             $obj->store();
@@ -198,20 +225,15 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                         $dm = $cov->dataMap();
                         if ( isset( $dm[$attributeName] ) && $dm[$attributeName]->hasContent() )
                         {
-                            $function = 'toString';
                             $contentObjectAttribute = $dm[$attributeName];
-                            if( $xrowworkflow_ini->hasGroup( 'ReplaceObjectPublished_' . $attributeName ) && $xrowworkflow_ini->hasVariable( 'ReplaceObjectPublished_' . $attributeName, 'Function' ) )
-                            {
-                                $function = $xrowworkflow_ini->variable( 'ReplaceObjectPublished_' . $attributeName, 'Function' );
-                            }
                             switch ( $contentObjectAttribute->DataTypeString )
                             {
                                 case 'ezpublishevent':
-                                    $content = $contentObjectAttribute->$function( $contentObjectAttribute );
+                                    $content = $contentObjectAttribute->content( $contentObjectAttribute );
                                     $time = $content['perioddetails']['firststartdate'];
                                     break;
                                 default:
-                                    $time = $contentObjectAttribute->$function( $contentObjectAttribute );
+                                    $time = $contentObjectAttribute->toString( $contentObjectAttribute );
                                     break;
                             }
                             $co->setAttribute( 'published', $time );

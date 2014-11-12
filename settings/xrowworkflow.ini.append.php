@@ -4,11 +4,17 @@
 #ReceiverArray[]
 #ReceiverArray[]=info@example.com
 
+#ExcludeClassForReplaceObjectPublishedWithWorkflowValue[]
+#ExcludeClassForReplaceObjectPublishedWithWorkflowValue[]=event
+
 # if you would like to replace published in some classes
 #ReplaceObjectPublishedWithField[event]=ezpevent
 
-# toString is default for Function but you can here overwrite this here to get a timestamp
-#[ReplaceObjectPublished_fieldname]
-#Function=getTimestamp
+# if you would like to set unpublished in some classes
+#ReplaceObjectUnpublishedWithField[event]=ezpevent
+
+# define here required data_type_string for switch
+#[ReplaceObjectUnpublished_fieldname]
+#DataTypeString=ezpublishevent
 
 */ ?>
