@@ -49,7 +49,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                 'text' => ezpI18n::tr( 'extension/xrowworkflow', 'Workflow: select an expiry date newer then the publication date.' ) 
             );
         }
-        if( $action == 'move' && $http->hasPostVariable( 'workflow-move-id' ) && $http->postVariable( 'workflow-move-id' ) == '' && !$http->hasPostVariable( 'CustomActionButton' ) )
+        if( $end && $action == 'move' && $http->hasPostVariable( 'workflow-move-id' ) && $http->postVariable( 'workflow-move-id' ) == '' && !$http->hasPostVariable( 'CustomActionButton' ) )
         {
             $result['is_valid'] = false;
             $result['warnings'][] = array( 
@@ -105,7 +105,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         {
             $row['end'] = $end->getTimestamp();
         }
-        if( $action == 'offline' && !$end )
+        if( !$end )
         {
             $xrowworkflow_ini = eZINI::instance( 'xrowworkflow.ini' );
             $type = 2;
@@ -123,6 +123,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                         {
                             case 'ezpublishevent':
                                 $row['end'] = eZPublishEvent::getEndTimestamp( $object, $http );
+                                $action = 'offline';
                                 break;
                             default:
                                 break;
