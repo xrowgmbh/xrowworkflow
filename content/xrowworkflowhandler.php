@@ -82,6 +82,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         $end = false;
         $action = '';
         $type = 1;
+        $now = time();
 
         if( $http->hasPostVariable( 'workflow-action' ) )
             $action = $http->postVariable( 'workflow-action' );
@@ -122,7 +123,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                         switch ( $dataTypeString )
                         {
                             case 'ezpublishevent':
-                                $row['end'] = eZPublishEvent::getEndTimestamp( $object, $http );
+                                $row['end'] = eZPublishEvent::getEndTimestampForWorkflow( $object, $http );
                                 $action = 'offline';
                                 break;
                             default:

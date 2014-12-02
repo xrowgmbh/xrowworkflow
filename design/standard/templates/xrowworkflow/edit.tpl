@@ -5,11 +5,9 @@
      $assigned_nodes = array()
      $workflowBrowseArray = array()
      $moveValue = ''}
-{if ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' )}
+{if and( is_set( ezhttp().post.BrowseActionName ), ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' ) )}
     {set $moveValue = ezhttp().post.SelectedNodeIDArray.0}
-{elseif and( ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' ), $workflowdata.get_action_list.ID.move.0 )}
-    {set $moveValue = ezhttp().post.SelectedNodeIDArray.0}
-{elseif $workflowdata.get_action_list.ID.move.0}
+{elseif is_set( $workflowdata.get_action_list.ID.move.0 )}
     {set $moveValue = $workflowdata.get_action_list.ID.move.0|explode( '_' ).1}
 {/if}
 
@@ -37,7 +35,6 @@
             {def $start = hash( 'date', $workflowBrowseArray.start|datetime( 'custom', '%d.%m.%Y' ),
                                 'hour', $workflowBrowseArray.start|datetime( 'custom', '%G' ),
                                 'minute', $startminute )}
-            
         {/if}
         {if is_set( $workflowBrowseArray.end )}
             {def $endminute = $workflowBrowseArray.end|datetime( 'custom', '%i' )}
@@ -45,10 +42,10 @@
             {def $end = hash( 'date', $workflowBrowseArray.end|datetime( 'custom', '%d.%m.%Y' ),
                               'hour', $workflowBrowseArray.end|datetime( 'custom', '%G' ),
                               'minute', $endminute )}
-                    
         {/if}
     {/if}
 {/if}
+
 <h2>{'Workflow'|i18n( 'extension/xrowworkflow' )}</h2>
 <fieldset>
     <legend>{'Date of publication'|i18n( 'extension/xrowworkflow' )}</legend>
