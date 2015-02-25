@@ -15,7 +15,6 @@ class eZObjectStatesFilter
      */
     static function createSQLParts( $params )
     {
-        eZDebug::writeDebug( $params, __METHOD__ );
         $result = array( 'tables'  => false,
                          'columns' => false,
                          'joins'   => false );
