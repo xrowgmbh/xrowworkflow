@@ -5,14 +5,15 @@
      $assigned_nodes = array()
      $workflowBrowseArray = array()
      $moveValue = ''}
+
 {if and( is_set( ezhttp().post.BrowseActionName ), ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' ) )}
     {set $moveValue = ezhttp().post.SelectedNodeIDArray.0}
 {elseif is_set( $workflowdata.get_action_list.ID.move.0 )}
     {set $moveValue = $workflowdata.get_action_list.ID.move.0|explode( '_' ).1}
 {/if}
 
-{if $attribute.object.assigned_nodes|count|gt( 0 )}
-    {foreach $attribute.object.assigned_nodes as $node}
+{if $object.assigned_nodes|count()|gt( 0 )}
+    {foreach $object.assigned_nodes as $node}
         <input type="hidden" name="ignoreNodesSelect[]" value="{$node.node_id}" />
         <input type="hidden" name="ignoreNodesSelect[]" value="{$node.parent.node_id}" />
         <input type="hidden" name="ignoreNodesSelectSubtree[]" value="{$node.node_id}" />
@@ -27,7 +28,7 @@
     {/foreach}
 {/if}
 {if ezhttp_hasvariable( 'BrowseParameters', 'session' )}
-    {if ezhttp( 'BrowseParameters', 'session' ).custom_action_data[contentobject_id]|eq( $attribute.contentobject_id )}
+    {if ezhttp( 'BrowseParameters', 'session' ).custom_action_data[contentobject_id]|eq( $object.id )}
         {set $workflowBrowseArray = ezhttp( 'BrowseParameters', 'session' ).custom_action_data}
         {if is_set( $workflowBrowseArray.start )}
             {def $startminute = $workflowBrowseArray.start|datetime( 'custom', '%i' )}
@@ -90,11 +91,11 @@
         {* MOVE *}
         <div class="workflow-action-div">
             <label for="workflow-action-move">
-                <input type="radio" id="workflow-action-move" name="workflow-action" value="move"{if or( $workflowdata.get_action_list.action|eq( 'move' ), ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' ) )} checked="checked"{/if} />
+                <input type="radio" id="workflow-action-move" name="workflow-action" value="move"{if or( $workflowdata.get_action_list.action|eq( 'move' ), and( is_set( ezhttp().post.BrowseActionName ), ezhttp().post.BrowseActionName|eq( 'AddNodeToMove' )) )} checked="checked"{/if} />
                 {'move to'|i18n( 'extension/xrowworkflow' )}
             </label>
             <input type="text" id="workflow-move-id" name="workflow-move-id" value="{$moveValue}"/>
-            <input class="button workflow-action-move" type="submit" name="CustomActionButton[{$attribute.object.id}_browse_related_node]" value="{'Browse for node'|i18n( 'extension/xrowworkflow' )}" />
+            <input class="button workflow-action-move" type="submit" name="CustomActionButton[{$object.id}_browse_related_node]" value="{'Browse for node'|i18n( 'extension/xrowworkflow' )}" />
         </div>
         {* DELETE *}
         <div class="workflow-action-div">
@@ -104,9 +105,9 @@
             </label>
 
             <select name="workflow-delete-id[]" id="workflow-delete-ids" multiple="multiple">
-                <option value="eZObject_{$attribute.contentobject_id}"{if $nochildren|not()} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZObject_',$attribute.contentobject_id))}selected="selected"{/if}>
-                    {if is_set($attribute.object.main_node)}
-                        {'Object'|i18n( 'extension/xrowworkflow' )}: {$attribute.object.main_node.url_alias|wash()}
+                <option value="eZObject_{$object.id}"{if $nochildren|not()} disabled="disabled"{/if} {if and( is_set( $workflowdata.get_action_list.ID.delete ), $workflowdata.get_action_list.ID.delete|contains(concat('eZObject_',$object.id)))}selected="selected"{/if}>
+                    {if is_set($object.main_node)}
+                        {'Object'|i18n( 'extension/xrowworkflow' )}: {$object.main_node.url_alias|wash()}
                     {else}
                         {'This object'|i18n( 'extension/xrowworkflow' )}
                     {/if}
@@ -114,14 +115,14 @@
                 
                 {* main node only enabled if no children or there are more assigned_nodes *}
                 {if $main_node|is_object()}
-                    <option value="eZNode_{$main_node.node_id}"{if or( $main_node.children_count|gt( 0 ), $assigned_nodes|count|eq( 0 ) )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$main_node.node_id))}selected="selected"{/if}>
+                    <option value="eZNode_{$main_node.node_id}"{if or( $main_node.children_count|gt( 0 ), $assigned_nodes|count|eq( 0 ) )} disabled="disabled"{/if} {if and( is_set( $workflowdata.get_action_list.ID.delete ), $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$main_node.node_id) ))}selected="selected"{/if}>
                        {'Main Node'|i18n( 'extension/xrowworkflow' )}: {$main_node.url_alias|wash()}
                     </option>
                 {/if}
                 
                 {if $assigned_nodes|count|gt( 0 )}
                     {foreach $assigned_nodes as $anode}
-                        <option value="eZNode_{$anode.node_id}"{if $anode.children_count|gt( 0 )} disabled="disabled"{/if} {if $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$anode.node_id))}selected="selected"{/if}>{'Node'|i18n( 'extension/xrowworkflow' )}: {$anode.url_alias|wash()}</option>
+                        <option value="eZNode_{$anode.node_id}"{if $anode.children_count|gt( 0 )} disabled="disabled"{/if} {if and( is_set( $workflowdata.get_action_list.ID.delete ), $workflowdata.get_action_list.ID.delete|contains(concat('eZNode_',$anode.node_id) ) )}selected="selected"{/if}>{'Node'|i18n( 'extension/xrowworkflow' )}: {$anode.url_alias|wash()}</option>
                     {/foreach}
                 {/if}
             </select>
