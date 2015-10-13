@@ -30,21 +30,16 @@ class eZObjectStatesFilter
         {
             $db = eZDB::instance();
             $joins = array();
-            $tables = array();
-            $i = 1;
+            
             foreach( $params['states_identifiers'] as $stateString )
             {
                 list( $groupIdentifier, $stateIdentifier ) = explode( '/', $stateString );
-
-                $tables[] = ' INNER JOIN ezcobj_state_link sl' . $i . ' ON (sl' . $i . '.contentobject_id=ezcontentobject.id) 
-                              INNER JOIN ezcobj_state s' . $i . ' ON ( sl' . $i . '.contentobject_state_id=s' . $i . '.id) 
-                              INNER JOIN ezcobj_state_group sg' . $i . ' ON ( sg' . $i . '.id=s' . $i . '.group_id )';
-                $joins[]  = ' sg' . $i . '.identifier="' . $db->escapeString( $groupIdentifier ) . '" AND s' . $i . '.identifier="' . $db->escapeString( $stateIdentifier ) . '" ';
-
-                $i++;
+                $joins[]  = ' sg1.identifier="' . $db->escapeString( $groupIdentifier ) . '" AND s1.identifier="' . $db->escapeString( $stateIdentifier ) . '" ';
             }
 
-            $result['tables'] = implode( ',', $tables );
+            $result['tables'] = ' INNER JOIN ezcobj_state_link sl1 ON (sl1.contentobject_id=ezcontentobject.id)
+                                  INNER JOIN ezcobj_state s1 ON ( sl1.contentobject_state_id=s1.id)
+                                  INNER JOIN ezcobj_state_group sg1 ON ( sg1.id=s1.group_id )';
             $result['joins']  = ' ( ' . implode( $operator, $joins ) . ' ) AND ';
         }
         else
