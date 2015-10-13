@@ -35,15 +35,16 @@ class eZObjectStatesFilter
             foreach( $params['states_identifiers'] as $stateString )
             {
                 list( $groupIdentifier, $stateIdentifier ) = explode( '/', $stateString );
-                $tables[] = ' ezcobj_state_group sg' . $i . ', ezcobj_state s' . $i . ', ezcobj_state_link sl' . $i;
-                $joins[]  = ' ( sg' . $i . '.identifier="' . $db->escapeString( $groupIdentifier ) . '"
-                             AND sg' . $i . '.id=s' . $i . '.group_id
-                             AND s' . $i . '.identifier="' . $db->escapeString( $stateIdentifier ) . '"
-                             AND sl' . $i . '.contentobject_state_id=s' . $i . '.id
-                             AND sl' . $i . '.contentobject_id=ezcontentobject.id ) ';
+
+                $tables[] = ' INNER JOIN ezcobj_state_link sl' . $i . ' ON (sl' . $i . '.contentobject_id=ezcontentobject.id) 
+                              INNER JOIN ezcobj_state s' . $i . ' ON ( sl' . $i . '.contentobject_state_id=s' . $i . '.id) 
+                              INNER JOIN ezcobj_state_group sg' . $i . ' ON ( sg' . $i . '.id=s' . $i . '.group_id )';
+                $joins[]  = ' sg' . $i . '.identifier="' . $db->escapeString( $groupIdentifier ) . '" AND s' . $i . '.identifier="' . $db->escapeString( $stateIdentifier ) . '" ';
+
                 $i++;
             }
-            $result['tables'] = ',' . implode( ',', $tables );
+
+            $result['tables'] = implode( ',', $tables );
             $result['joins']  = ' ( ' . implode( $operator, $joins ) . ' ) AND ';
         }
         else
