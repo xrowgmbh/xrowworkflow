@@ -12,7 +12,7 @@ class xrowworkflowFilter
             $joins = array();
             $tables = array( 'xrowworkflow' );
             $result['tables'] = ',' . implode( ',', $tables );
-            $result['joins']  = ' xrowworkflow.contentobject_id = ezcontentobject.id and ezcontentobject.id AND xrowworkflow.start < ' . time() . ' AND xrowworkflow.start > 0 AND ';
+            $result['joins']  = ' xrowworkflow.contentobject_id = ezcontentobject.id AND xrowworkflow.start < ' . time() . ' AND xrowworkflow.start > 0 AND ';
         return $result;
     }
     static function end( $params )
@@ -25,7 +25,7 @@ class xrowworkflowFilter
             $joins = array();
             $tables = array( 'xrowworkflow' );
             $result['tables'] = ',' . implode( ',', $tables );
-            $result['joins']  = ' xrowworkflow.contentobject_id = ezcontentobject.id and ezcontentobject.id AND xrowworkflow.end < ' . time() . ' AND xrowworkflow.end > 0 AND ';
+            $result['joins']  = ' xrowworkflow.contentobject_id = ezcontentobject.id AND xrowworkflow.end < ' . time() . ' AND xrowworkflow.end > 0 AND ';
         return $result;
     }
 }
