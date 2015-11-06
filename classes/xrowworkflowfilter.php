@@ -11,8 +11,8 @@ class xrowworkflowFilter
             $db = eZDB::instance();
             $joins = array();
             $tables = array( 'xrowworkflow' );
-            $result['tables'] = ',' . implode( ',', $tables );
-            $result['joins']  = ' xrowworkflow.contentobject_id = ezcontentobject.id AND xrowworkflow.start < ' . time() . ' AND xrowworkflow.start > 0 AND ';
+            $result['tables'] = 'INNER JOIN ' . implode( ',', $tables ) .' ON (xrowworkflow.contentobject_id = ezcontentobject.id) ';
+            $result['joins']  = ' xrowworkflow.start < ' . time() . ' AND xrowworkflow.start > 0  AND ';
         return $result;
     }
     static function end( $params )
@@ -24,8 +24,8 @@ class xrowworkflowFilter
             $db = eZDB::instance();
             $joins = array();
             $tables = array( 'xrowworkflow' );
-            $result['tables'] = ',' . implode( ',', $tables );
-            $result['joins']  = ' xrowworkflow.contentobject_id = ezcontentobject.id AND xrowworkflow.end < ' . time() . ' AND xrowworkflow.end > 0 AND ';
+            $result['tables'] = 'INNER JOIN ' . implode( ',', $tables ) .' ON (xrowworkflow.contentobject_id = ezcontentobject.id)' ;
+            $result['joins']  = ' xrowworkflow.end < ' . time() . ' AND xrowworkflow.end > 0 AND ';
         return $result;
     }
 }
