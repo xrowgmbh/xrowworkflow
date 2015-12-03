@@ -196,11 +196,11 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         $row['type'] = $type;
 
         // save only if action is set (offline, move, delete) or online date is not empty
-        if ( ( $row['start'] && $row['start'] < $now ) || ( $row['end'] && $row['end'] < $now ) || ( $row['end'] && $row['end'] < $row['start'] ) )
+        if ( ( isset($row['start']) && $row['start'] < $now ) || ( isset($row['end']) && $row['end'] < $now ) || ( isset($row['start']) && isset($row['end']) && $row['end'] < $row['start'] ) )
         {
             eZDebug::writeDebug( 'no workflow saved', __METHOD__ );
         }
-        elseif( ( $action != '' && $row['end'] ) || $row['start'] )
+        elseif( ( $action != '' && isset($row['end']) ) || isset($row['start']) )
         {
             $obj = new xrowworkflow( $row );
             $obj->store();
