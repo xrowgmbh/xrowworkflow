@@ -18,6 +18,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
             $action = $http->postVariable( 'workflow-action' );
         if( $http->hasPostVariable( 'workflow-start' ) )
         {
+            $action = 'online';
             $startArray = $http->postVariable( 'workflow-start' );
             if( isset( $startArray['date'] ) && $startArray['date'] != '' )
                 $start = self::getDate( $startArray );
