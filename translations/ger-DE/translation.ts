@@ -66,4 +66,11 @@
         <translation>Hauptort</translation>
     </message>
 </context>
+<context>
+    <name>design/admin/node/view/full</name>
+    <message>
+        <source>Object state</source>
+        <translation>Zustand</translation>
+    </message>
+</context>
 </TS>
