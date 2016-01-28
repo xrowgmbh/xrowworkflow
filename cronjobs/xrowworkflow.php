@@ -24,6 +24,22 @@ else
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
 $nodeID = 1;
 
+/* workaround to remove all xrowworkflows without a valid contentobject
+$db = eZDB::instance();
+$rows = $db->arrayQuery( "SELECT contentobject_id FROM xrowworkflow" );
+$counter = 0;
+foreach ($rows as $row) {
+    $test = eZContentObject::fetch($row['contentobject_id']);
+    if (!$test instanceof eZContentObject){
+        $counter++;
+        var_dump($row['contentobject_id']);
+        $xrowworkflowTest = xrowworkflow::fetchByContentObjectID($row['contentobject_id']);
+        $xrowworkflowTest->remove();
+    }
+}
+die(var_dump($counter));
+*/
+
 $params = array( 
     'Limitation' => array(),
     'IgnoreVisibility' => true,
@@ -33,8 +49,8 @@ $params = array(
     ) 
 );
 
-$nodeArrayCount = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
-if ( $nodeArrayCount > 0 )
+$nodeArrayCountNotOnline = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
+if ( $nodeArrayCountNotOnline > 0 )
 {
     if ( ! $isQuiet )
     {
@@ -43,7 +59,7 @@ if ( $nodeArrayCount > 0 )
     }
     if ( ! $isQuiet )
     {
-        $cli->output( "Do END-xrowworkflow for " . $nodeArrayCount . " node(s)." );
+        $cli->output( "Do END-xrowworkflow for " . $nodeArrayCountNotOnline . " node(s)." );
     }
     $params['Limit'] = 50;
     $params['Offset'] = 0;
@@ -148,8 +164,10 @@ if ( $nodeArrayCount > 0 )
                 }
             }
             $params["Offset"] = $params["Offset"] + count( $nodeArray );
-            eZContentObject::clearCache();
         }
     }
     while ( is_array( $nodeArray ) and count( $nodeArray ) > 0 );
+}
+if ($nodeArrayCountNotOnline > 0 || $nodeArrayCount > 0){
+    eZContentObject::clearCache();
 }

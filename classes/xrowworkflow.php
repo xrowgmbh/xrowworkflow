@@ -103,44 +103,47 @@ class xrowworkflow extends eZPersistentObject
         // we don't need to re-assign states the object currently already has assigned
         $currentStateIDArray = $object->attribute( 'state_id_array' );
         $selectedStateIDList = array_diff( $selectedStateIDList, $currentStateIDArray );
-        foreach ( $selectedStateIDList as $selectedStateID )
-        {
-            $state = eZContentObjectState::fetchById( $selectedStateID );
-            $object->assignState( $state );
+        if (count($selectedStateIDList) > 0) {
+            foreach ( $selectedStateIDList as $selectedStateID )
+            {
+                $state = eZContentObjectState::fetchById( $selectedStateID );
+                $object->assignState( $state );
+            }
+            //call appropriate method from search engine
+            eZSearch::updateObjectState( $objectID, $selectedStateIDList );
         }
-        //call appropriate method from search engine
-        eZSearch::updateObjectState( $objectID, $selectedStateIDList );
         eZContentCacheManager::clearContentCacheIfNeeded( $objectID );
     }
 
     function online()
     {
         $object = eZContentObject::fetch( $this->contentobject_id );
-        $xrowworkflow_ini = eZINI::instance( 'xrowworkflow.ini' );
-        $excludeClasses = array();
-        if ( $xrowworkflow_ini->hasVariable( 'Settings', 'ExcludeClassForReplaceObjectPublishedWithWorkflowValue' ) )
-        {
-            $excludeClasses = $xrowworkflow_ini->variable( 'Settings', 'ExcludeClassForReplaceObjectPublishedWithWorkflowValue' );
+        if ($object instanceof eZContentObject) {
+            $xrowworkflow_ini = eZINI::instance( 'xrowworkflow.ini' );
+            $excludeClasses = array();
+            if ( $xrowworkflow_ini->hasVariable( 'Settings', 'ExcludeClassForReplaceObjectPublishedWithWorkflowValue' ) )
+            {
+                $excludeClasses = $xrowworkflow_ini->variable( 'Settings', 'ExcludeClassForReplaceObjectPublishedWithWorkflowValue' );
+            }
+            if ( $this->attribute( 'start' ) > 0 && 
+                ( count( $excludeClasses ) == 0 || ( count( $excludeClasses ) > 0 && in_array( $object->attribute( 'class_identifier' ), $excludeClasses ) ) ) )
+            {
+                $object->setAttribute( 'published', $this->attribute( 'start' ) );
+                $object->store();
+            }
+            self::updateObjectState( $this->contentobject_id, array( 
+                eZContentObjectState::fetchByIdentifier( xrowworkflow::ONLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
+            ) );
+            if( $this->attribute( 'end' ) !== NULL && $this->attribute( 'end' ) > 0 )
+            {
+                $this->setAttribute( 'start', 0 );
+                $this->store();
+            }
+            else
+            {
+                $this->remove();
+            }
         }
-        if ( $this->attribute( 'start' ) > 0 && 
-            ( count( $excludeClasses ) == 0 || ( count( $excludeClasses ) > 0 && in_array( $object->attribute( 'class_identifier' ), $excludeClasses ) ) ) )
-        {
-            $object->setAttribute( 'published', $this->attribute( 'start' ) );
-            $object->store();
-        }
-        self::updateObjectState( $this->contentobject_id, array( 
-            eZContentObjectState::fetchByIdentifier( xrowworkflow::ONLINE, eZContentObjectStateGroup::fetchByIdentifier( xrowworkflow::STATE_GROUP )->ID )->ID 
-        ) );
-        if( $this->attribute( 'end' ) !== NULL && $this->attribute( 'end' ) > 0 )
-        {
-            $this->setAttribute( 'start', 0 );
-            $this->store();
-        }
-        else
-        {
-            $this->remove();
-        }
-        eZContentCacheManager::clearContentCache( $this->contentobject_id );
         eZDebug::writeDebug( __METHOD__ );
     }
 
