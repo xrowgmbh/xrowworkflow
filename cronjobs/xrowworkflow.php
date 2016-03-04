@@ -24,21 +24,21 @@ else
 eZINI::instance()->setVariable( 'SiteAccessSettings', 'ShowHiddenNodes', 'false' );
 $nodeID = 1;
 
-/* workaround to remove all xrowworkflows without a valid contentobject
-$db = eZDB::instance();
-$rows = $db->arrayQuery( "SELECT contentobject_id FROM xrowworkflow" );
-$counter = 0;
-foreach ($rows as $row) {
-    $test = eZContentObject::fetch($row['contentobject_id']);
-    if (!$test instanceof eZContentObject){
+// workaround to remove all xrowworkflows without a valid contentobject, 
+// should execute with a probability of 1 to 100 or something like that
+$probability = 50;
+$random = rand(0, $probability);
+if (($random % $probability) == 1) {
+    $db = eZDB::instance();
+    $rows = $db->arrayQuery( "SELECT contentobject_id FROM xrowworkflow x LEFT JOIN ezcontentobject ez ON x.contentobject_id = ez.id WHERE ez.id IS NULL" );
+    $counter = 0;
+    foreach ($rows as $row) {
         $counter++;
-        var_dump($row['contentobject_id']);
         $xrowworkflowTest = xrowworkflow::fetchByContentObjectID($row['contentobject_id']);
         $xrowworkflowTest->remove();
     }
+    $cli->output( "Removed ".$counter." xrowworkflow rows without associated contentobjects." );
 }
-die(var_dump($counter));
-*/
 
 $params = array( 
     'Limitation' => array(),
@@ -49,8 +49,8 @@ $params = array(
     ) 
 );
 
-$nodeArrayCountNotOnline = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
-if ( $nodeArrayCountNotOnline > 0 )
+$nodeArrayCount = (int)eZContentObjectTreeNode::subTreeCountByNodeID( $params, $nodeID );
+if ( $nodeArrayCount > 0 )
 {
     if ( ! $isQuiet )
     {
@@ -59,7 +59,7 @@ if ( $nodeArrayCountNotOnline > 0 )
     }
     if ( ! $isQuiet )
     {
-        $cli->output( "Do END-xrowworkflow for " . $nodeArrayCountNotOnline . " node(s)." );
+        $cli->output( "Do END-xrowworkflow for " . $nodeArrayCount . " node(s)." );
     }
     $params['Limit'] = 50;
     $params['Offset'] = 0;
@@ -164,10 +164,8 @@ if ( $nodeArrayCount > 0 )
                 }
             }
             $params["Offset"] = $params["Offset"] + count( $nodeArray );
+            eZContentObject::clearCache();
         }
     }
     while ( is_array( $nodeArray ) and count( $nodeArray ) > 0 );
-}
-if ($nodeArrayCountNotOnline > 0 || $nodeArrayCount > 0){
-    eZContentObject::clearCache();
 }
