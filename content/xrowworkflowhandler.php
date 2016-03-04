@@ -10,6 +10,15 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
             'warnings' => array() 
         );
 
+        $doNotValidateStartDate = false;
+        $ini = eZINI::instance();
+        $xrowworkflowINI = eZINI::instance( 'xrowworkflow.ini' );
+        if ($xrowworkflowINI->hasVariable( 'Settings', 'DoNotValidateStartDate' )) {
+            if ($xrowworkflowINI->variable( 'Settings', 'DoNotValidateStartDate' ) == 'enabled') {
+                $doNotValidateStartDate = true;
+            }
+        }
+
         $now = new DateTime();
         $start = false;
         $end = false;
@@ -29,7 +38,7 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
             if( isset( $endArray['date'] ) && $endArray['date'] != '' )
                 $end = self::getDate( $endArray );
         }
-        if ( $start && $start < $now )
+        if ( $start && $start < $now && $doNotValidateStartDate === false )
         {
             $result['is_valid'] = false; 
             $result['warnings'][] = array( 
@@ -196,8 +205,16 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         }
         $row['type'] = $type;
 
+        $doNotValidateStartDate = false;
+        $ini = eZINI::instance();
+        $xrowworkflowINI = eZINI::instance( 'xrowworkflow.ini' );
+        if ($xrowworkflowINI->hasVariable( 'Settings', 'DoNotValidateStartDate' )) {
+            if ($xrowworkflowINI->variable( 'Settings', 'DoNotValidateStartDate' ) == 'enabled') {
+                $doNotValidateStartDate = true;
+            }
+        }
         // save only if action is set (offline, move, delete) or online date is not empty
-        if ( ( isset($row['start']) && $row['start'] < $now ) || ( isset($row['end']) && $row['end'] < $now ) || ( isset($row['start']) && isset($row['end']) && $row['end'] < $row['start'] ) )
+        if ( ( isset($row['start']) && $row['start'] < $now && $doNotValidateStartDate === false ) || ( isset($row['end']) && $row['end'] < $now ) || ( isset($row['start']) && isset($row['end']) && $row['end'] < $row['start'] ) )
         {
             eZDebug::writeDebug( 'no workflow saved', __METHOD__ );
         }
