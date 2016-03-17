@@ -3,6 +3,8 @@
 #[Settings]
 #ReceiverArray[]
 #ReceiverArray[]=info@example.com
+#DoNotValidateStartDate=enabled
+#OverwritePublishedOnDemand=enabled
 
 #ExcludeClassForReplaceObjectPublishedWithWorkflowValue[]
 #ExcludeClassForReplaceObjectPublishedWithWorkflowValue[]=event

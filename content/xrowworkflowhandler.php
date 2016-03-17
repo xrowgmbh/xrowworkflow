@@ -229,7 +229,8 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
     function publish( $contentObjectID, $version )
     {
         $xrowworkflow_ini = eZINI::instance( 'xrowworkflow.ini' );
-        if( $xrowworkflow_ini->hasVariable( 'Settings', 'ReplaceObjectPublishedWithField' ) )
+        $workflow = xrowworkflow::fetchByContentObjectID( $contentObjectID );
+        if( $xrowworkflow_ini->hasVariable( 'Settings', 'ReplaceObjectPublishedWithField' ) || ( $xrowworkflow_ini->hasVariable( 'Settings', 'OverwritePublishedOnDemand' ) && $xrowworkflow_ini->variable( 'Settings', 'OverwritePublishedOnDemand' ) == 'enabled' ) )
         {
             $cov = eZContentObjectVersion::fetchVersion( $version, $contentObjectID );
             if ( $cov instanceof eZContentObjectVersion )
@@ -237,33 +238,44 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                 $co = $cov->attribute( 'contentobject' );
                 if ( $co instanceof eZContentObject )
                 {
-                    $replacePublished = $xrowworkflow_ini->variable( 'Settings', 'ReplaceObjectPublishedWithField' );
-                    $class_identifier = $co->attribute( 'class_identifier' );
-                    if( isset( $replacePublished[$class_identifier] ) )
+                    if( $xrowworkflow_ini->hasVariable( 'Settings', 'ReplaceObjectPublishedWithField' ) )
                     {
-                        $attributeName = $replacePublished[$class_identifier];
-                        $dm = $cov->dataMap();
-                        if ( isset( $dm[$attributeName] ) && $dm[$attributeName]->hasContent() )
+                        $replacePublished = $xrowworkflow_ini->variable( 'Settings', 'ReplaceObjectPublishedWithField' );
+                        $class_identifier = $co->attribute( 'class_identifier' );
+                        if( isset( $replacePublished[$class_identifier] ) )
                         {
-                            $contentObjectAttribute = $dm[$attributeName];
-                            switch ( $contentObjectAttribute->DataTypeString )
+                            $attributeName = $replacePublished[$class_identifier];
+                            $dm = $cov->dataMap();
+                            if ( isset( $dm[$attributeName] ) && $dm[$attributeName]->hasContent() )
                             {
-                                case 'ezpublishevent':
-                                    $content = $contentObjectAttribute->content( $contentObjectAttribute );
-                                    $time = $content['perioddetails']['firststartdate'];
-                                    break;
-                                default:
-                                    $time = $contentObjectAttribute->toString( $contentObjectAttribute );
-                                    break;
+                                $contentObjectAttribute = $dm[$attributeName];
+                                switch ( $contentObjectAttribute->DataTypeString )
+                                {
+                                    case 'ezpublishevent':
+                                        $content = $contentObjectAttribute->content( $contentObjectAttribute );
+                                        $time = $content['perioddetails']['firststartdate'];
+                                        break;
+                                    default:
+                                        $time = $contentObjectAttribute->toString( $contentObjectAttribute );
+                                        break;
+                                }
+                                $co->setAttribute( 'published', $time );
+                                $co->store();
                             }
-                            $co->setAttribute( 'published', $time );
+                        }
+                    }
+                    // Check if OverwritePublishedOnDemand is enabled
+                    else
+                    {
+                        if ( $workflow instanceof xrowworkflow && isset( $workflow->start ) and $workflow->start > 0 )
+                        {
+                            $co->setAttribute( 'published', $workflow->start );
                             $co->store();
                         }
                     }
                 }
             }
         }
-        $workflow = xrowworkflow::fetchByContentObjectID( $contentObjectID );
         if ( $workflow instanceof xrowworkflow )
         {
             $workflow->check();
