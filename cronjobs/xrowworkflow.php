@@ -30,14 +30,28 @@ $probability = 50;
 $random = rand(0, $probability);
 if (($random % $probability) == 1) {
     $db = eZDB::instance();
+    // Corrupt objects
     $rows = $db->arrayQuery( "SELECT contentobject_id FROM xrowworkflow x LEFT JOIN ezcontentobject ez ON x.contentobject_id = ez.id WHERE ez.id IS NULL" );
-    $counter = 0;
-    foreach ($rows as $row) {
-        $counter++;
-        $xrowworkflowTest = xrowworkflow::fetchByContentObjectID($row['contentobject_id']);
-        $xrowworkflowTest->remove();
+    if (count($rows) > 0) {
+        $counter = 0;
+        foreach ($rows as $row) {
+            $counter++;
+            $xrowworkflowTest = xrowworkflow::fetchByContentObjectID($row['contentobject_id']);
+            $xrowworkflowTest->remove();
+        }
+        $cli->output( "Removed ".$counter." xrowworkflow rows without associated contentobject." );
     }
-    $cli->output( "Removed ".$counter." xrowworkflow rows without associated contentobjects." );
+    // Objects are in waste
+    $rows = $db->arrayQuery( "SELECT x.contentobject_id FROM xrowworkflow x LEFT JOIN ezcontentobject_tree ez ON x.contentobject_id = ez.contentobject_id WHERE ez.contentobject_id IS NULL" );
+    if (count($rows) > 0) {
+        $counter = 0;
+        foreach ($rows as $row) {
+            $counter++;
+            $xrowworkflowTest = xrowworkflow::fetchByContentObjectID($row['contentobject_id']);
+            $xrowworkflowTest->remove();
+        }
+        $cli->output( "Removed ".$counter." xrowworkflow rows without associated contentobject." );
+    }
 }
 
 $params = array( 
