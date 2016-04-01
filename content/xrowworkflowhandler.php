@@ -130,10 +130,16 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                     if( $xrowworkflow_ini->hasGroup( 'ReplaceObjectUnpublished_' . $attributeName ) && $xrowworkflow_ini->hasVariable( 'ReplaceObjectUnpublished_' . $attributeName, 'DataTypeString' ) )
                     {
                         $dataTypeString = $xrowworkflow_ini->variable( 'ReplaceObjectUnpublished_' . $attributeName, 'DataTypeString' );
+                        foreach ($contentObjectAttributes as $contentObjectAttributeItem) {
+                            if ($contentObjectAttributeItem->DataTypeString == $dataTypeString) {
+                                $contentObjectAttribute = $contentObjectAttributeItem;
+                                break;
+                            }
+                        }
                         switch ( $dataTypeString )
                         {
                             case 'ezpublishevent':
-                                $row['end'] = eZPublishEvent::getEndTimestampForWorkflow( $object, $http );
+                                $row['end'] = eZPublishEvent::getEndTimestampForWorkflow( $object, $http, $contentObjectAttribute );
                                 $action = 'offline';
                                 break;
                             default:
