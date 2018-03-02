@@ -39,9 +39,9 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                 $end = self::getDate( $endArray );
         }
         
-        //This is a special code for xrowbildlizenz Extension!!!!!! - start
+        //This is a special code for xrowimagelicensing Extension!!!!!! - start
          foreach ($contentObjectAttributes as $contentObjectAttributeItem) {
-             if ($contentObjectAttributeItem->DataTypeString == 'xrowbildlizenz') {
+             if ($contentObjectAttributeItem->DataTypeString == 'xrowimagelicensing') {
                  $selectedID = 'ContentObjectAttribute_bildlizenz_selected_' . $contentObjectAttributeItem->ID;
                  if( $http->hasPostVariable( $selectedID ) && $http->postVariable( $selectedID ) == '0')
                  {
@@ -88,7 +88,6 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                  break;
              }
          }
-         //end
         
         if ( $start && $start < $now && $doNotValidateStartDate === false )
         {
@@ -183,9 +182,9 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
             $row['action'] = serialize( array( 'action' => $action ) );
         }
         
-        //This is a special code for xrowbildlizenz Extension!!!!!! - start
+        //This is a special code for xrowimagelicensing Extension!!!!!! - start
         foreach ($contentObjectAttributes as $contentObjectAttributeItem) {
-            if ($contentObjectAttributeItem->DataTypeString == 'xrowbildlizenz') {
+            if ($contentObjectAttributeItem->DataTypeString == 'xrowimagelicensing') {
                 $selectedID = 'ContentObjectAttribute_bildlizenz_selected_' . $contentObjectAttributeItem->ID;
                 if( $http->hasPostVariable( $selectedID ) && $http->postVariable( $selectedID ) == '0' )
                 {
