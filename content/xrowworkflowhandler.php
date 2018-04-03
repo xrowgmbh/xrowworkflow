@@ -38,55 +38,6 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
             if( isset( $endArray['date'] ) && $endArray['date'] != '' )
                 $end = self::getDate( $endArray );
         }
-        
-        //This is a special code for xrowimagelicensing Extension!!!!!! - start
-        foreach ($contentObjectAttributes as $contentObjectAttributeItem) {
-            if ($contentObjectAttributeItem->DataTypeString == 'xrowimagelicensing') {
-                $selectedID = 'ContentObjectAttribute_bildlizenz_selected_' . $contentObjectAttributeItem->ID;
-                if( $http->hasPostVariable( $selectedID ) && $http->postVariable( $selectedID ) == '0')
-                {
-                    $year = $http->postVariable( 'ContentObjectAttribute_bildlizenz_year_' . $contentObjectAttributeItem->ID );
-                    $month = $http->postVariable( 'ContentObjectAttribute_bildlizenz_month_' . $contentObjectAttributeItem->ID);
-                    $day = $http->postVariable( 'ContentObjectAttribute_bildlizenz_day_' . $contentObjectAttributeItem->ID);
-                    $hour = $http->postVariable( 'ContentObjectAttribute_bildlizenz_hour_' . $contentObjectAttributeItem->ID);
-                    $minute = $http->postVariable( 'ContentObjectAttribute_bildlizenz_minute_' . $contentObjectAttributeItem->ID);
-
-                    if(is_numeric($year) and is_numeric($month) and is_numeric($day) and is_numeric($hour) and is_numeric($minute)) {
-                        $stateDate = eZDateTimeValidator::validateDate( (int)$day, (int)$month, (int)$year );
-                        $stateTime = eZDateTimeValidator::validateTime( (int)$hour, (int)$minute );
-                        if ( $stateDate == eZInputValidator::STATE_INVALID )
-                        {
-                            $result['is_valid'] = false;
-                            $result['warnings'][] = array(
-                             'text' => 'Workflow: '. ezpI18n::tr( 'kernel/classes/datatypes', 'Date is not valid.' )
-                            );
-                        }
-                        elseif ( $stateTime== eZInputValidator::STATE_INVALID ) 
-                        {
-                            $result['is_valid'] = false;
-                            $result['warnings'][] = array(
-                             'text' => 'Workflow: '. ezpI18n::tr( 'kernel/classes/datatypes', 'Time is not valid.' )
-                            );
-                        }
-                        else
-                        {
-                            $date = $day . '.' . $month . '.' . $year;
-                            $action= "delete";
-                            $bildLinzenzDateArray = array('date'=>$date, 'hour'=>$hour,'minute'=>$minute);
-                            if( isset( $bildLinzenzDateArray['date'] ) && $bildLinzenzDateArray['date'] != '' )
-                                $end = self::getDate( $bildLinzenzDateArray);
-                            } 
-                    } else {
-                        $result['is_valid'] = false;
-                        $result['warnings'][] = array(
-                            'text' => 'Workflow: Datum oder Zeit ist ungültig.'
-                        );
-                    }
-                }
-                break;
-            }
-        }
-        
         if ( $start && $start < $now && $doNotValidateStartDate === false )
         {
             $result['is_valid'] = false; 
@@ -161,80 +112,6 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         $row = array( 
             'contentobject_id' => $object->ID 
         );
-        
-        if( $http->hasPostVariable( 'workflow-' . $action . '-id' ) )
-        {
-            $id = ( ! is_array( $http->postVariable( 'workflow-' . $action . '-id' ) ) ) ? array(
-                'eZNode_' . $http->postVariable( 'workflow-' . $action . '-id' )
-            ) : $http->postVariable( 'workflow-' . $action . '-id' );
-            $row['action'] = serialize( array(
-                'action' => $action,
-                'ID' => array(
-                    $action => $id
-                )
-            ) );
-        }
-        else
-        {
-            $row['action'] = serialize( array( 'action' => $action ) );
-        }
-        
-        //This is a special code for xrowimagelicensing Extension!!!!!! - start
-        foreach ($contentObjectAttributes as $contentObjectAttributeItem) {
-            if ($contentObjectAttributeItem->DataTypeString == 'xrowimagelicensing') {
-                $selectedID = 'ContentObjectAttribute_bildlizenz_selected_' . $contentObjectAttributeItem->ID;
-                if( $http->hasPostVariable( $selectedID ) && $http->postVariable( $selectedID ) == '0' )
-                {
-                    $year = $http->postVariable( 'ContentObjectAttribute_bildlizenz_year_' . $contentObjectAttributeItem->ID );
-                    $month = $http->postVariable( 'ContentObjectAttribute_bildlizenz_month_' . $contentObjectAttributeItem->ID);
-                    $day = $http->postVariable( 'ContentObjectAttribute_bildlizenz_day_' . $contentObjectAttributeItem->ID);
-                    $hour = $http->postVariable( 'ContentObjectAttribute_bildlizenz_hour_' . $contentObjectAttributeItem->ID);
-                    $minute = $http->postVariable( 'ContentObjectAttribute_bildlizenz_minute_' . $contentObjectAttributeItem->ID);
-
-                    if(is_numeric($year) and is_numeric($month) and is_numeric($day) and is_numeric($hour) and is_numeric($minute)) {
-                        $stateDate = eZDateTimeValidator::validateDate( (int)$day, (int)$month, (int)$year );
-                        $stateTime = eZDateTimeValidator::validateTime( (int)$hour, (int)$minute );
-                        if ( $stateDate == eZInputValidator::STATE_INVALID )
-                        {
-                            $result['is_valid'] = false;
-                            $result['warnings'][] = array(
-                                'text' => 'Workflow: '. ezpI18n::tr( 'kernel/classes/datatypes', 'Date is not valid.' )
-                            );
-                        }
-                        elseif ( $stateTime== eZInputValidator::STATE_INVALID )
-                        {
-                            $result['is_valid'] = false;
-                            $result['warnings'][] = array(
-                                'text' => 'Workflow: '. ezpI18n::tr( 'kernel/classes/datatypes', 'Time is not valid.' )
-                            );
-                        }
-                        else
-                        {
-                            $date = $day . '.' . $month . '.' . $year;
-                            $action= "delete";
-                            $bildLinzenzDateArray = array('date'=>$date, 'hour'=>$hour,'minute'=>$minute);
-                            
-                            $row['action'] = serialize( array(
-                                'action' => $action,
-                                'ID' => array(
-                                    $action => 'eZObject_'.$object->ID
-                                )
-                            ) );
-                            
-                            if( isset( $bildLinzenzDateArray['date'] ) && $bildLinzenzDateArray['date'] != '' )
-                                $end = self::getDate( $bildLinzenzDateArray);
-                        }
-                    } else {
-                        $result['is_valid'] = false;
-                        $result['warnings'][] = array(
-                            'text' => 'Workflow: Datum oder Zeit ist ungültig.'
-                        );
-                    }
-                }
-                break;
-            }
-        }
-
         if( $action != '' && $end )
         {
             $row['end'] = $end->getTimestamp();
@@ -315,6 +192,22 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
                     return eZContentBrowse::browse( $browseParameters, $module );
                 }
             }
+        }
+        if( $http->hasPostVariable( 'workflow-' . $action . '-id' ) )
+        {
+            $id = ( ! is_array( $http->postVariable( 'workflow-' . $action . '-id' ) ) ) ? array( 
+                    'eZNode_' . $http->postVariable( 'workflow-' . $action . '-id' ) 
+                    ) : $http->postVariable( 'workflow-' . $action . '-id' );
+            $row['action'] = serialize( array( 
+                'action' => $action, 
+                'ID' => array( 
+                    $action => $id 
+                ) 
+            ) );
+        }
+        else
+        {
+            $row['action'] = serialize( array( 'action' => $action ) );
         }
         $row['type'] = $type;
 
