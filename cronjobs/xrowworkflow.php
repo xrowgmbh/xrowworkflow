@@ -1,5 +1,8 @@
 <?php
 
+#verbose cron output
+$GLOBALS['eZDebugEnabled'] = true;
+
 //login a admin user
 $user = eZUser::fetch( eZINI::instance()->variable( 'UserSettings', 'UserCreatorID' ) );
 
