@@ -394,9 +394,9 @@ class xrowworkflow extends eZPersistentObject
                     eZContentCacheManager::clearObjectViewCache( $relation->ID );
 
                     //removing the xrowgisrelation by cleaning the values
-                    $data_map["xrowgis"]->setAttribute( 'data_int', NULL );
-                    $data_map["xrowgis"]->setAttribute( 'sort_key_int', 0 );
-                    $data_map["xrowgis"]->store();
+                    $data_map[$attribute->ContentClassAttributeIdentifier]->setAttribute( 'data_int', NULL );
+                    $data_map[$attribute->ContentClassAttributeIdentifier]->setAttribute( 'sort_key_int', 0 );
+                    $data_map[$attribute->ContentClassAttributeIdentifier]->store();
                     $relation->store();
                     //relation cleanup?
                 }
