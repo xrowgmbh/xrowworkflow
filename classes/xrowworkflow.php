@@ -205,7 +205,7 @@ class xrowworkflow extends eZPersistentObject
                 }
 
                 eZContentObjectTreeNodeOperations::move( $mainNodeID, $moveToNodeID );
-                eZDebug::writeDebug( "Move $mainNodeID to $moveToID[1]", __METHOD__ );
+                eZDebug::writeDebug( "Move $mainNodeID to $moveToNodeID", __METHOD__ );
                 if( count( $deleteIDArray ) > 0 )
                 {
                     eZDebug::writeDebug( "Move action: remove NodeIDs " . implode( ', ', $deleteIDArray ), __METHOD__ );
