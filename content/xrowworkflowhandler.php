@@ -228,6 +228,11 @@ class xrowworkflowhandler extends eZContentObjectEditHandler
         {
             $obj = new xrowworkflow( $row );
             $obj->store();
+        } else {
+            $obj = new xrowworkflow($row);
+            $obj->remove();
+            eZDebug::writeError('Removed workflow for contentobject_id = ' . $row['contentobject_id'] . ' from table', __METHOD__);
+            eZDebug::writeError( 'no workflow saved', __METHOD__ );
         }
         $http->removeSessionVariable( 'BrowseParameters' );
     }
