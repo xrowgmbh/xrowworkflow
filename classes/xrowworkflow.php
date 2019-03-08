@@ -125,9 +125,9 @@ class xrowworkflow extends eZPersistentObject
             {
                 $excludeClasses = $xrowworkflow_ini->variable( 'Settings', 'ExcludeClassForReplaceObjectPublishedWithWorkflowValue' );
             }
-            if ( $this->attribute( 'start' ) > 0 && 
-                ( count( $excludeClasses ) == 0 || ( count( $excludeClasses ) > 0 && in_array( $object->attribute( 'class_identifier' ), $excludeClasses ) ) ) )
-            {
+            if ($this->attribute('start') > 0 &&
+                (count($excludeClasses) == 0 || (count($excludeClasses) > 0 && !in_array($object->attribute('class_identifier'), $excludeClasses )))
+            ) {
                 $object->setAttribute( 'published', $this->attribute( 'start' ) );
                 $object->store();
             }
